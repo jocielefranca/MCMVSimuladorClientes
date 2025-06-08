@@ -7,10 +7,10 @@
   <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.development.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/babel-standalone@6/babel.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/lucide-react@0.264.0/dist/umd/lucide-react.min.js"></script>
+  <!-- Removida a importação problemática do Lucide -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style> 
+  <style>
     .gradient-header {
       background: linear-gradient(135deg, #3b82f6, #8b5cf6);
       -webkit-background-clip: text;
@@ -32,11 +32,25 @@
   <div id="root" class="p-4"></div>
 
   <script type="text/babel">
-    const { useState, useEffect, useMemo } = React;
-    const { 
-      Calculator, Home, DollarSign, TrendingUp, Info, RefreshCw, 
-      AlertTriangle, Shield, User, Target 
-    } = LucideReact.icons;
+    const { useState, useEffect } = React;
+
+    // Componentes de ícone substitutos
+    const Icon = ({ name, className }) => {
+      const icons = {
+        Calculator: () => <i className={`fas fa-calculator ${className}`}></i>,
+        Home: () => <i className={`fas fa-home ${className}`}></i>,
+        DollarSign: () => <i className={`fas fa-dollar-sign ${className}`}></i>,
+        TrendingUp: () => <i className={`fas fa-chart-line ${className}`}></i>,
+        Info: () => <i className={`fas fa-info-circle ${className}`}></i>,
+        RefreshCw: () => <i className={`fas fa-sync ${className}`}></i>,
+        AlertTriangle: () => <i className={`fas fa-exclamation-triangle ${className}`}></i>,
+        Shield: () => <i className={`fas fa-shield-alt ${className}`}></i>,
+        User: () => <i className={`fas fa-user ${className}`}></i>,
+        Target: () => <i className={`fas fa-bullseye ${className}`}></i>
+      };
+      
+      return icons[name] ? icons[name]() : null;
+    };
 
     const SimuladorMCMV = () => {
       const [dados, setDados] = useState({
@@ -63,50 +77,6 @@
         if (renda <= 7000) return { faixa: 'Faixa 2', subsidio: 47500, maxFinanciamento: 350000 };
         if (renda <= 10000) return { faixa: 'Faixa 3', subsidio: 0, maxFinanciamento: 1500000 };
         return { faixa: 'Acima MCMV', subsidio: 0, maxFinanciamento: 1500000 };
-      };
-
-      // Análise de risco baseada no score e comprometimento
-      const calcularRiscoInadimplencia = (score, comprometimento) => {
-        let risco = 0;
-        
-        // Risco por score
-        if (score < 300) risco += 70;
-        else if (score < 400) risco += 50;
-        else if (score < 500) risco += 35;
-        else if (score < 600) risco += 25;
-        else if (score < 700) risco += 15;
-        else if (score < 800) risco += 8;
-        else risco += 3;
-        
-        // Risco por comprometimento
-        if (comprometimento > 40) risco += 30;
-        else if (comprometimento > 35) risco += 20;
-        else if (comprometimento > 30) risco += 12;
-        else if (comprometimento > 25) risco += 8;
-        else if (comprometimento > 20) risco += 5;
-        
-        return Math.min(risco, 95); // Máximo 95%
-      };
-
-      const calcularRiscoDistrato = (score, comprometimento, faixa) => {
-        let risco = 0;
-        
-        // Risco base por score
-        if (score < 400) risco += 40;
-        else if (score < 500) risco += 25;
-        else if (score < 600) risco += 15;
-        else if (score < 700) risco += 10;
-        else risco += 5;
-        
-        // Risco por comprometimento
-        if (comprometimento > 35) risco += 25;
-        else if (comprometimento > 30) risco += 15;
-        else if (comprometimento > 25) risco += 10;
-        
-        // Ajuste por faixa MCMV
-        if (faixa === 'Faixa 1' || faixa === 'Faixa 1.5') risco -= 5;
-        
-        return Math.max(Math.min(risco, 85), 5); // Entre 5% e 85%
       };
 
       // Cálculo das parcelas SAC
@@ -168,19 +138,7 @@
             const valorSubsidio = Math.min(faixaMCMV.subsidio, dados.precoImovel * 0.2);
             const valorFinanciamento = dados.precoImovel - (dados.precoImovel * dados.percentualEntrada / 100) - valorSubsidio;
             
-            // Parcelas da entrada durante a obra (corrigidas pelo INCC - assumindo 0.5% ao mês)
-            const parcelaEntradaInicial = valorEntradaTotal > 0 ? valorEntradaTotal / dados.tempoEntradaMeses : 0;
-            const taxaINCCMensal = 0.005;
-            
-            let parcelasEntradaObra = [];
-            const mesesEntradaObra = Math.min(dados.tempoEntradaMeses, dados.tempoObraMeses);
-            
-            for (let i = 1; i <= mesesEntradaObra; i++) {
-              const fatorCorrecao = Math.pow(1 + taxaINCCMensal, i - 1);
-              parcelasEntradaObra.push(parcelaEntradaInicial * fatorCorrecao);
-            }
-            
-            // Juros de fase de obra calculados mensalmente sobre o saldo devedor
+            // Juros de fase de obra
             const taxaJurosMensal = dados.jurosFaseObra / 100 / 12;
             let parcelasJurosObra = [];
             let saldoLiberado = 0;
@@ -196,47 +154,18 @@
               ? parcelasJurosObra.reduce((a, b) => a + b, 0) / parcelasJurosObra.length 
               : 0;
             
-            // Financiamento após entrega das chaves
+            // Financiamento após entrega
             const prazoFinanciamento = 360;
             const parcelasFinanciamento = dados.sistemaAmortizacao === 'SAC' 
               ? calcularSAC(valorFinanciamento, dados.jurosFinanciamento, prazoFinanciamento)
               : calcularPRICE(valorFinanciamento, dados.jurosFinanciamento, prazoFinanciamento);
             
-            // Parcelas da entrada após entrega
-            const parcelasRestantesEntrada = Math.max(0, dados.tempoEntradaMeses - dados.tempoObraMeses);
-            const taxaIPCAMensal = 0.004;
-            
-            let parcelasEntradaPosObra = [];
-            if (parcelasRestantesEntrada > 0) {
-              const ultimaParcelaObra = parcelasEntradaObra.length > 0 
-                ? parcelasEntradaObra[parcelasEntradaObra.length - 1] 
-                : parcelaEntradaInicial;
-              for (let i = 1; i <= parcelasRestantesEntrada; i++) {
-                const fatorCorrecao = Math.pow(1 + taxaIPCAMensal, i);
-                parcelasEntradaPosObra.push(ultimaParcelaObra * fatorCorrecao);
-              }
-            }
-            
             // Comprometimento durante a obra
-            const parcelaMediaEntradaObra = parcelasEntradaObra.length > 0 
-              ? parcelasEntradaObra.reduce((a, b) => a + b, 0) / parcelasEntradaObra.length 
-              : 0;
-            const comprometimentoObra = ((parcelaMediaEntradaObra + parcelaJurosFaseObraMedia) / dados.rendaFamiliar) * 100;
+            const comprometimentoObra = (parcelaJurosFaseObraMedia / dados.rendaFamiliar) * 100;
             
             // Comprometimento após entrega
             const parcelaFinanciamentoPrimeira = parcelasFinanciamento.length > 0 ? parcelasFinanciamento[0].parcela : 0;
-            const parcelaEntradaPosObraMedia = parcelasEntradaPosObra.length > 0 
-              ? parcelasEntradaPosObra.reduce((a, b) => a + b, 0) / parcelasEntradaPosObra.length 
-              : 0;
-            const comprometimentoPosEntrega = ((parcelaFinanciamentoPrimeira + parcelaEntradaPosObraMedia) / dados.rendaFamiliar) * 100;
-            
-            // Análise de risco
-            const riscoInadimplencia = calcularRiscoInadimplencia(dados.scoreCliente, comprometimentoPosEntrega);
-            const riscoDistrato = calcularRiscoDistrato(dados.scoreCliente, comprometimentoObra, faixaMCMV.faixa);
-            
-            // Valores de risco em reais
-            const valorRiscoInadimplencia = valorFinanciamento * (riscoInadimplencia / 100);
-            const valorRiscoDistrato = dados.precoImovel * (riscoDistrato / 100);
+            const comprometimentoPosEntrega = (parcelaFinanciamentoPrimeira / dados.rendaFamiliar) * 100;
             
             setResultados({
               faixaMCMV: faixaMCMV.faixa,
@@ -244,17 +173,10 @@
               valorEntradaTotal,
               valorEntradaMoradia,
               valorFinanciamento,
-              parcelaMediaEntradaObra,
               parcelaJurosFaseObraMedia,
               parcelaFinanciamentoPrimeira,
-              parcelaEntradaPosObraMedia,
               comprometimentoObra,
               comprometimentoPosEntrega,
-              riscoInadimplencia,
-              riscoDistrato,
-              valorRiscoInadimplencia,
-              valorRiscoDistrato,
-              parcelasEntradaObra: parcelasEntradaObra.slice(0, 6),
               parcelasFinanciamento: parcelasFinanciamento.slice(0, 12),
               parcelasJurosObra: parcelasJurosObra.slice(0, 6),
               totalJurosObra: parcelasJurosObra.reduce((a, b) => a + b, 0)
@@ -263,7 +185,7 @@
             setLoading(false);
           }, 500);
         } catch (err) {
-          setError("Ocorreu um erro ao calcular a simulação. Verifique os dados e tente novamente.");
+          setError("Ocorreu um erro ao calcular. Verifique os valores inseridos.");
           setLoading(false);
           console.error(err);
         }
@@ -287,13 +209,6 @@
         return 'from-red-400 to-red-600';
       };
 
-      const getCorRisco = (percentual) => {
-        if (percentual <= 10) return 'from-green-400 to-green-600';
-        if (percentual <= 25) return 'from-yellow-400 to-yellow-600';
-        if (percentual <= 50) return 'from-orange-400 to-orange-600';
-        return 'from-red-400 to-red-600';
-      };
-
       const getClassificacaoScore = (score) => {
         if (score >= 800) return { classe: 'Excelente', cor: 'text-green-600' };
         if (score >= 700) return { classe: 'Muito Bom', cor: 'text-blue-600' };
@@ -313,13 +228,13 @@
               <div className="flex flex-col md:flex-row items-center justify-between mb-6">
                 <div className="flex items-center gap-4 mb-4 md:mb-0">
                   <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-3 rounded-xl">
-                    <Calculator className="text-white" size={32} />
+                    <Icon name="Calculator" className="text-white text-xl" />
                   </div>
                   <div>
                     <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                       Simulador MCMV Pro
                     </h1>
-                    <p className="text-gray-600 mt-1">Análise Completa de Comprometimento e Risco</p>
+                    <p className="text-gray-600 mt-1">Análise Completa de Financiamento</p>
                   </div>
                 </div>
                 
@@ -328,7 +243,7 @@
                   disabled={loading}
                   className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50"
                 >
-                  <RefreshCw className={`${loading ? 'animate-spin' : ''}`} size={20} />
+                  <Icon name="RefreshCw" className={`${loading ? 'animate-spin' : ''} text-xl`} />
                   {loading ? 'Calculando...' : 'Atualizar'}
                 </button>
               </div>
@@ -344,7 +259,7 @@
                 <div className="lg:col-span-1 space-y-6">
                   <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-6 rounded-xl">
                     <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                      <Home className="text-blue-600" size={20} />
+                      <Icon name="Home" className="text-blue-600 text-xl" />
                       Dados do Imóvel
                     </h2>
                     
@@ -398,7 +313,7 @@
 
                   <div className="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-xl">
                     <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                      <User className="text-green-600" size={20} />
+                      <Icon name="User" className="text-green-600 text-xl" />
                       Dados do Cliente
                     </h2>
                     
@@ -446,7 +361,7 @@
 
                   <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-xl">
                     <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                      <Target className="text-purple-600" size={20} />
+                      <Icon name="Target" className="text-purple-600 text-xl" />
                       Configurações Financeiras
                     </h2>
                     
@@ -502,7 +417,7 @@
                             <p className="text-2xl font-bold">{resultados.faixaMCMV}</p>
                             <p className="text-blue-100 text-sm">Subsídio: R$ {resultados.valorSubsidio.toLocaleString('pt-BR')}</p>
                           </div>
-                          <Home size={32} className="text-blue-200" />
+                          <Icon name="Home" className="text-blue-200 text-2xl" />
                         </div>
                       </div>
 
@@ -511,18 +426,18 @@
                           <div>
                             <p className="text-green-100 text-sm">Valor Financiamento</p>
                             <p className="text-2xl font-bold">R$ {resultados.valorFinanciamento.toLocaleString('pt-BR')}</p>
-                            <p className="text-green-100 text-sm">Score: {dados.scoreCliente} - {scoreInfo.classe}</p>
+                            <p className="text-green-100 text-sm">Entrada: R$ {resultados.valorEntradaTotal.toLocaleString('pt-BR')}</p>
                           </div>
-                          <DollarSign size={32} className="text-green-200" />
+                          <Icon name="DollarSign" className="text-green-200 text-2xl" />
                         </div>
                       </div>
                     </div>
 
-                    {/* Mapa de Calor do Comprometimento */}
+                    {/* Comprometimento */}
                     <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
                       <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                        <TrendingUp className="text-purple-600" size={24} />
-                        Mapa de Calor - Comprometimento de Renda
+                        <Icon name="TrendingUp" className="text-purple-600 text-xl" />
+                        Comprometimento de Renda
                       </h3>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -532,9 +447,8 @@
                             <p className="text-4xl font-bold">{resultados.comprometimentoObra.toFixed(1)}%</p>
                             <p className="text-sm opacity-90">da renda comprometida</p>
                           </div>
-                          <div className="mt-3 p-3 bg-gray-50 rounded-lg text-xs text-gray-600">
-                            <p>Entrada: R$ {resultados.parcelaMediaEntradaObra.toFixed(2)}</p>
-                            <p>Juros Obra: R$ {resultados.parcelaJurosFaseObraMedia.toFixed(2)}</p>
+                          <div className="mt-3 p-3 bg-gray-50 rounded-lg text-sm text-gray-600">
+                            <p>Juros médios: R$ {resultados.parcelaJurosFaseObraMedia.toFixed(2)}</p>
                           </div>
                         </div>
                         
@@ -544,47 +458,9 @@
                             <p className="text-4xl font-bold">{resultados.comprometimentoPosEntrega.toFixed(1)}%</p>
                             <p className="text-sm opacity-90">da renda comprometida</p>
                           </div>
-                          <div className="mt-3 p-3 bg-gray-50 rounded-lg text-xs text-gray-600">
-                            <p>Financiamento: R$ {resultados.parcelaFinanciamentoPrimeira.toFixed(2)}</p>
-                            <p>Entrada: R$ {resultados.parcelaEntradaPosObraMedia.toFixed(2)}</p>
+                          <div className="mt-3 p-3 bg-gray-50 rounded-lg text-sm text-gray-600">
+                            <p>Primeira parcela: R$ {resultados.parcelaFinanciamentoPrimeira.toFixed(2)}</p>
                           </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Análise de Risco */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                        <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                          <AlertTriangle className="text-orange-600" size={20} />
-                          Risco de Inadimplência
-                        </h4>
-                        
-                        <div className={`bg-gradient-to-r ${getCorRisco(resultados.riscoInadimplencia)} text-white p-4 rounded-lg mb-4`}>
-                          <p className="text-3xl font-bold">{resultados.riscoInadimplencia.toFixed(1)}%</p>
-                          <p className="text-sm opacity-90">probabilidade de inadimplência</p>
-                        </div>
-                        
-                        <div className="text-sm text-gray-600">
-                          <p>Valor em risco: <span className="font-bold text-red-600">R$ {resultados.valorRiscoInadimplencia.toLocaleString('pt-BR')}</span></p>
-                          <p className="mt-1 text-xs">Baseado no score e comprometimento</p>
-                        </div>
-                      </div>
-
-                      <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                        <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                          <Shield className="text-red-600" size={20} />
-                          Risco de Distrato
-                        </h4>
-                        
-                        <div className={`bg-gradient-to-r ${getCorRisco(resultados.riscoDistrato)} text-white p-4 rounded-lg mb-4`}>
-                          <p className="text-3xl font-bold">{resultados.riscoDistrato.toFixed(1)}%</p>
-                          <p className="text-sm opacity-90">probabilidade de distrato</p>
-                        </div>
-                        
-                        <div className="text-sm text-gray-600">
-                          <p>Valor em risco: <span className="font-bold text-red-600">R$ {resultados.valorRiscoDistrato.toLocaleString('pt-BR')}</span></p>
-                          <p className="mt-1 text-xs">Baseado no score e comprometimento durante a obra</p>
                         </div>
                       </div>
                     </div>
@@ -592,35 +468,13 @@
                     {/* Detalhes das Parcelas */}
                     <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
                       <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                        <DollarSign className="text-blue-600" size={24} />
+                        <Icon name="DollarSign" className="text-blue-600 text-xl" />
                         Detalhamento das Parcelas
                       </h3>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <h4 className="font-medium text-gray-700 mb-3">Parcelas da Entrada (Primeiros 6 meses)</h4>
-                          <div className="bg-gray-50 rounded-lg p-4 max-h-64 overflow-y-auto">
-                            <table className="w-full text-sm">
-                              <thead>
-                                <tr className="text-gray-500 border-b">
-                                  <th className="pb-2 text-left">Mês</th>
-                                  <th className="pb-2 text-right">Valor (R$)</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {resultados.parcelasEntradaObra.map((parcela, index) => (
-                                  <tr key={index} className="border-b border-gray-100 last:border-0">
-                                    <td className="py-2 text-gray-600">{index + 1}</td>
-                                    <td className="py-2 text-right font-medium">{parcela.toFixed(2)}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <h4 className="font-medium text-gray-700 mb-3">Juros na Fase de Obra (Primeiros 6 meses)</h4>
+                          <h4 className="font-medium text-gray-700 mb-3">Juros na Fase de Obra</h4>
                           <div className="bg-gray-50 rounded-lg p-4 max-h-64 overflow-y-auto">
                             <table className="w-full text-sm">
                               <thead>
@@ -639,12 +493,12 @@
                               </tbody>
                             </table>
                           </div>
-                          <p className="text-xs text-gray-500 mt-2">Total em juros na obra: R$ {resultados.totalJurosObra.toFixed(2)}</p>
+                          <p className="text-xs text-gray-500 mt-2">Total em juros: R$ {resultados.totalJurosObra.toFixed(2)}</p>
                         </div>
                       </div>
                       
                       <div className="mt-6">
-                        <h4 className="font-medium text-gray-700 mb-3">Parcelas do Financiamento (Primeiros 12 meses)</h4>
+                        <h4 className="font-medium text-gray-700 mb-3">Parcelas do Financiamento</h4>
                         <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
                           <table className="w-full text-sm">
                             <thead>
@@ -663,7 +517,7 @@
                                   <td className="py-2 text-right font-medium">{parcela.parcela.toFixed(2)}</td>
                                   <td className="py-2 text-right">{parcela.amortizacao.toFixed(2)}</td>
                                   <td className="py-2 text-right">{parcela.juros.toFixed(2)}</td>
-                                  <td className="py-2 text-right">{parcela.saldoDevedor.toFixed(2)}</td>
+                                  <td className="py-2 text-right">{parcela.saldoDevedor.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -680,10 +534,10 @@
                 ) : (
                   <div className="lg:col-span-2 flex flex-col items-center justify-center py-12 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl">
                     <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-full mb-4">
-                      <Calculator className="text-white" size={48} />
+                      <Icon name="Calculator" className="text-white text-3xl" />
                     </div>
                     <h2 className="text-2xl font-bold text-gray-800 mb-2">Simulação Pronta</h2>
-                    <p className="text-gray-600 text-center max-w-md">Preencha os dados ao lado e clique em "Atualizar" para ver os resultados da simulação do financiamento imobiliário.</p>
+                    <p className="text-gray-600 text-center max-w-md">Preencha os dados e clique em "Atualizar" para ver os resultados da simulação.</p>
                   </div>
                 )}
               </div>
