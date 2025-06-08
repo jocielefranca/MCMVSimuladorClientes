@@ -1,652 +1,705 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Calculator, Home, DollarSign, TrendingUp, Info, RefreshCw, AlertTriangle, Shield, User, Target } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador MCMV Pro</title>
+  <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/babel-standalone@6/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide-react@0.264.0/dist/umd/lucide-react.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .gradient-header {
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .shadow-card {
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    .animate-pulse {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-white to-purple-50 min-h-screen">
+  <div id="root" class="p-4"></div>
 
-const SimuladorMCMV = () => {
-  const [dados, setDados] = useState({
-    precoImovel: 350000,
-    rendaFamiliar: 8000,
-    percentualEntrada: 20,
-    tempoEntradaMeses: 24,
-    tempoObraMeses: 36,
-    jurosFaseObra: 0.5,
-    jurosFinanciamento: 8.16,
-    entradaMoradia: true,
-    sistemaAmortizacao: 'SAC',
-    scoreCliente: 650
-  });
+  <script type="text/babel">
+    const { useState, useEffect, useMemo } = React;
+    const { 
+      Calculator, Home, DollarSign, TrendingUp, Info, RefreshCw, 
+      AlertTriangle, Shield, User, Target 
+    } = LucideReact.icons;
 
-  const [resultados, setResultados] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  // Faixas do MCMV 2024
-  const getFaixaMCMV = (renda) => {
-    if (renda <= 2600) return { faixa: 'Faixa 1', subsidio: 47500, maxFinanciamento: 200000 };
-    if (renda <= 4000) return { faixa: 'Faixa 1.5', subsidio: 29000, maxFinanciamento: 264000 };
-    if (renda <= 7000) return { faixa: 'Faixa 2', subsidio: 47500, maxFinanciamento: 350000 };
-    if (renda <= 10000) return { faixa: 'Faixa 3', subsidio: 0, maxFinanciamento: 1500000 };
-    return { faixa: 'Acima MCMV', subsidio: 0, maxFinanciamento: 1500000 };
-  };
-
-  // Análise de risco baseada no score e comprometimento
-  const calcularRiscoInadimplencia = (score, comprometimento) => {
-    let risco = 0;
-    
-    // Risco por score
-    if (score < 300) risco += 70;
-    else if (score < 400) risco += 50;
-    else if (score < 500) risco += 35;
-    else if (score < 600) risco += 25;
-    else if (score < 700) risco += 15;
-    else if (score < 800) risco += 8;
-    else risco += 3;
-    
-    // Risco por comprometimento
-    if (comprometimento > 40) risco += 30;
-    else if (comprometimento > 35) risco += 20;
-    else if (comprometimento > 30) risco += 12;
-    else if (comprometimento > 25) risco += 8;
-    else if (comprometimento > 20) risco += 5;
-    
-    return Math.min(risco, 95); // Máximo 95%
-  };
-
-  const calcularRiscoDistrato = (score, comprometimento, faixa) => {
-    let risco = 0;
-    
-    // Risco base por score
-    if (score < 400) risco += 40;
-    else if (score < 500) risco += 25;
-    else if (score < 600) risco += 15;
-    else if (score < 700) risco += 10;
-    else risco += 5;
-    
-    // Risco por comprometimento
-    if (comprometimento > 35) risco += 25;
-    else if (comprometimento > 30) risco += 15;
-    else if (comprometimento > 25) risco += 10;
-    
-    // Ajuste por faixa MCMV
-    if (faixa === 'Faixa 1' || faixa === 'Faixa 1.5') risco -= 5;
-    
-    return Math.max(Math.min(risco, 85), 5); // Entre 5% e 85%
-  };
-
-  // Cálculo das parcelas SAC
-  const calcularSAC = (valor, taxa, parcelas) => {
-    const taxaMensal = taxa / 100 / 12;
-    const amortizacao = valor / parcelas;
-    const parcelas_array = [];
-    let saldoDevedor = valor;
-    
-    for (let i = 1; i <= parcelas; i++) {
-      const juros = saldoDevedor * taxaMensal;
-      const parcela = amortizacao + juros;
-      parcelas_array.push({
-        numero: i,
-        parcela: parcela,
-        amortizacao: amortizacao,
-        juros: juros,
-        saldoDevedor: Math.max(0, saldoDevedor - amortizacao)
+    const SimuladorMCMV = () => {
+      const [dados, setDados] = useState({
+        precoImovel: 350000,
+        rendaFamiliar: 8000,
+        percentualEntrada: 20,
+        tempoEntradaMeses: 24,
+        tempoObraMeses: 36,
+        jurosFaseObra: 0.5,
+        jurosFinanciamento: 8.16,
+        entradaMoradia: true,
+        sistemaAmortizacao: 'SAC',
+        scoreCliente: 650
       });
-      saldoDevedor -= amortizacao;
-    }
-    return parcelas_array;
-  };
 
-  // Cálculo das parcelas PRICE
-  const calcularPRICE = (valor, taxa, parcelas) => {
-    const taxaMensal = taxa / 100 / 12;
-    const parcela = valor * (taxaMensal * Math.pow(1 + taxaMensal, parcelas)) / (Math.pow(1 + taxaMensal, parcelas) - 1);
-    
-    const parcelas_array = [];
-    let saldoDevedor = valor;
-    
-    for (let i = 1; i <= parcelas; i++) {
-      const juros = saldoDevedor * taxaMensal;
-      const amortizacao = parcela - juros;
-      parcelas_array.push({
-        numero: i,
-        parcela: parcela,
-        amortizacao: amortizacao,
-        juros: juros,
-        saldoDevedor: Math.max(0, saldoDevedor - amortizacao)
-      });
-      saldoDevedor -= amortizacao;
-    }
-    return parcelas_array;
-  };
+      const [resultados, setResultados] = useState(null);
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState(null);
 
-  const calcularSimulacao = () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      setTimeout(() => {
-        const faixaMCMV = getFaixaMCMV(dados.rendaFamiliar);
+      // Faixas do MCMV 2024
+      const getFaixaMCMV = (renda) => {
+        if (renda <= 2600) return { faixa: 'Faixa 1', subsidio: 47500, maxFinanciamento: 200000 };
+        if (renda <= 4000) return { faixa: 'Faixa 1.5', subsidio: 29000, maxFinanciamento: 264000 };
+        if (renda <= 7000) return { faixa: 'Faixa 2', subsidio: 47500, maxFinanciamento: 350000 };
+        if (renda <= 10000) return { faixa: 'Faixa 3', subsidio: 0, maxFinanciamento: 1500000 };
+        return { faixa: 'Acima MCMV', subsidio: 0, maxFinanciamento: 1500000 };
+      };
+
+      // Análise de risco baseada no score e comprometimento
+      const calcularRiscoInadimplencia = (score, comprometimento) => {
+        let risco = 0;
         
-        // Valores base
-        const valorEntradaMoradia = dados.entradaMoradia ? 20000 : 0;
-        const valorEntradaTotal = (dados.precoImovel * dados.percentualEntrada / 100) - valorEntradaMoradia;
-        const valorSubsidio = Math.min(faixaMCMV.subsidio, dados.precoImovel * 0.2);
-        const valorFinanciamento = dados.precoImovel - (dados.precoImovel * dados.percentualEntrada / 100) - valorSubsidio;
+        // Risco por score
+        if (score < 300) risco += 70;
+        else if (score < 400) risco += 50;
+        else if (score < 500) risco += 35;
+        else if (score < 600) risco += 25;
+        else if (score < 700) risco += 15;
+        else if (score < 800) risco += 8;
+        else risco += 3;
         
-        // Parcelas da entrada durante a obra (corrigidas pelo INCC - assumindo 0.5% ao mês)
-        const parcelaEntradaInicial = valorEntradaTotal > 0 ? valorEntradaTotal / dados.tempoEntradaMeses : 0;
-        const taxaINCCMensal = 0.005;
+        // Risco por comprometimento
+        if (comprometimento > 40) risco += 30;
+        else if (comprometimento > 35) risco += 20;
+        else if (comprometimento > 30) risco += 12;
+        else if (comprometimento > 25) risco += 8;
+        else if (comprometimento > 20) risco += 5;
         
-        let parcelasEntradaObra = [];
-        const mesesEntradaObra = Math.min(dados.tempoEntradaMeses, dados.tempoObraMeses);
+        return Math.min(risco, 95); // Máximo 95%
+      };
+
+      const calcularRiscoDistrato = (score, comprometimento, faixa) => {
+        let risco = 0;
         
-        for (let i = 1; i <= mesesEntradaObra; i++) {
-          const fatorCorrecao = Math.pow(1 + taxaINCCMensal, i - 1);
-          parcelasEntradaObra.push(parcelaEntradaInicial * fatorCorrecao);
+        // Risco base por score
+        if (score < 400) risco += 40;
+        else if (score < 500) risco += 25;
+        else if (score < 600) risco += 15;
+        else if (score < 700) risco += 10;
+        else risco += 5;
+        
+        // Risco por comprometimento
+        if (comprometimento > 35) risco += 25;
+        else if (comprometimento > 30) risco += 15;
+        else if (comprometimento > 25) risco += 10;
+        
+        // Ajuste por faixa MCMV
+        if (faixa === 'Faixa 1' || faixa === 'Faixa 1.5') risco -= 5;
+        
+        return Math.max(Math.min(risco, 85), 5); // Entre 5% e 85%
+      };
+
+      // Cálculo das parcelas SAC
+      const calcularSAC = (valor, taxa, parcelas) => {
+        const taxaMensal = taxa / 100 / 12;
+        const amortizacao = valor / parcelas;
+        const parcelas_array = [];
+        let saldoDevedor = valor;
+        
+        for (let i = 1; i <= parcelas; i++) {
+          const juros = saldoDevedor * taxaMensal;
+          const parcela = amortizacao + juros;
+          parcelas_array.push({
+            numero: i,
+            parcela: parcela,
+            amortizacao: amortizacao,
+            juros: juros,
+            saldoDevedor: Math.max(0, saldoDevedor - amortizacao)
+          });
+          saldoDevedor -= amortizacao;
         }
+        return parcelas_array;
+      };
+
+      // Cálculo das parcelas PRICE
+      const calcularPRICE = (valor, taxa, parcelas) => {
+        const taxaMensal = taxa / 100 / 12;
+        const parcela = valor * (taxaMensal * Math.pow(1 + taxaMensal, parcelas)) / (Math.pow(1 + taxaMensal, parcelas) - 1);
         
-        // Juros de fase de obra calculados mensalmente sobre o saldo devedor
-        const taxaJurosMensal = dados.jurosFaseObra / 100 / 12;
-        let parcelasJurosObra = [];
-        let saldoLiberado = 0;
-        const liberacaoMensal = valorFinanciamento / dados.tempoObraMeses;
+        const parcelas_array = [];
+        let saldoDevedor = valor;
         
-        for (let i = 1; i <= dados.tempoObraMeses; i++) {
-          saldoLiberado += liberacaoMensal;
-          const jurosDoMes = saldoLiberado * taxaJurosMensal;
-          parcelasJurosObra.push(jurosDoMes);
+        for (let i = 1; i <= parcelas; i++) {
+          const juros = saldoDevedor * taxaMensal;
+          const amortizacao = parcela - juros;
+          parcelas_array.push({
+            numero: i,
+            parcela: parcela,
+            amortizacao: amortizacao,
+            juros: juros,
+            saldoDevedor: Math.max(0, saldoDevedor - amortizacao)
+          });
+          saldoDevedor -= amortizacao;
         }
-        
-        const parcelaJurosFaseObraMedia = parcelasJurosObra.length > 0 
-          ? parcelasJurosObra.reduce((a, b) => a + b, 0) / parcelasJurosObra.length 
-          : 0;
-        
-        // Financiamento após entrega das chaves
-        const prazoFinanciamento = 360;
-        const parcelasFinanciamento = dados.sistemaAmortizacao === 'SAC' 
-          ? calcularSAC(valorFinanciamento, dados.jurosFinanciamento, prazoFinanciamento)
-          : calcularPRICE(valorFinanciamento, dados.jurosFinanciamento, prazoFinanciamento);
-        
-        // Parcelas da entrada após entrega
-        const parcelasRestantesEntrada = Math.max(0, dados.tempoEntradaMeses - dados.tempoObraMeses);
-        const taxaIPCAMensal = 0.004;
-        
-        let parcelasEntradaPosObra = [];
-        if (parcelasRestantesEntrada > 0) {
-          const ultimaParcelaObra = parcelasEntradaObra.length > 0 
-            ? parcelasEntradaObra[parcelasEntradaObra.length - 1] 
-            : parcelaEntradaInicial;
-          for (let i = 1; i <= parcelasRestantesEntrada; i++) {
-            const fatorCorrecao = Math.pow(1 + taxaIPCAMensal, i);
-            parcelasEntradaPosObra.push(ultimaParcelaObra * fatorCorrecao);
-          }
-        }
-        
-        // Comprometimento durante a obra
-        const parcelaMediaEntradaObra = parcelasEntradaObra.length > 0 
-          ? parcelasEntradaObra.reduce((a, b) => a + b, 0) / parcelasEntradaObra.length 
-          : 0;
-        const comprometimentoObra = ((parcelaMediaEntradaObra + parcelaJurosFaseObraMedia) / dados.rendaFamiliar) * 100;
-        
-        // Comprometimento após entrega
-        const parcelaFinanciamentoPrimeira = parcelasFinanciamento.length > 0 ? parcelasFinanciamento[0].parcela : 0;
-        const parcelaEntradaPosObraMedia = parcelasEntradaPosObra.length > 0 
-          ? parcelasEntradaPosObra.reduce((a, b) => a + b, 0) / parcelasEntradaPosObra.length 
-          : 0;
-        const comprometimentoPosEntrega = ((parcelaFinanciamentoPrimeira + parcelaEntradaPosObraMedia) / dados.rendaFamiliar) * 100;
-        
-        // Análise de risco
-        const riscoInadimplencia = calcularRiscoInadimplencia(dados.scoreCliente, comprometimentoPosEntrega);
-        const riscoDistrato = calcularRiscoDistrato(dados.scoreCliente, comprometimentoObra, faixaMCMV.faixa);
-        
-        // Valores de risco em reais
-        const valorRiscoInadimplencia = valorFinanciamento * (riscoInadimplencia / 100);
-        const valorRiscoDistrato = dados.precoImovel * (riscoDistrato / 100);
-        
-        setResultados({
-          faixaMCMV: faixaMCMV.faixa,
-          valorSubsidio,
-          valorEntradaTotal,
-          valorEntradaMoradia,
-          valorFinanciamento,
-          parcelaMediaEntradaObra,
-          parcelaJurosFaseObraMedia,
-          parcelaFinanciamentoPrimeira,
-          parcelaEntradaPosObraMedia,
-          comprometimentoObra,
-          comprometimentoPosEntrega,
-          riscoInadimplencia,
-          riscoDistrato,
-          valorRiscoInadimplencia,
-          valorRiscoDistrato,
-          parcelasEntradaObra: parcelasEntradaObra.slice(0, 6),
-          parcelasFinanciamento: parcelasFinanciamento.slice(0, 12),
-          parcelasJurosObra: parcelasJurosObra.slice(0, 6),
-          totalJurosObra: parcelasJurosObra.reduce((a, b) => a + b, 0)
-        });
-        
-        setLoading(false);
-      }, 500);
-    } catch (err) {
-      setError("Ocorreu um erro ao calcular a simulação. Verifique os dados e tente novamente.");
-      setLoading(false);
-      console.error(err);
-    }
-  };
+        return parcelas_array;
+      };
 
-  useEffect(() => {
-    calcularSimulacao();
-  }, []);
-
-  const handleInputChange = (field, value) => {
-    setDados(prev => ({
-      ...prev,
-      [field]: field === 'entradaMoradia' || field === 'sistemaAmortizacao' ? value : (parseFloat(value) || 0)
-    }));
-  };
-
-  const getCorComprometimento = (percentual) => {
-    if (percentual <= 20) return 'from-green-400 to-green-600';
-    if (percentual <= 30) return 'from-yellow-400 to-yellow-600';
-    if (percentual <= 40) return 'from-orange-400 to-orange-600';
-    return 'from-red-400 to-red-600';
-  };
-
-  const getCorRisco = (percentual) => {
-    if (percentual <= 10) return 'from-green-400 to-green-600';
-    if (percentual <= 25) return 'from-yellow-400 to-yellow-600';
-    if (percentual <= 50) return 'from-orange-400 to-orange-600';
-    return 'from-red-400 to-red-600';
-  };
-
-  const getClassificacaoScore = (score) => {
-    if (score >= 800) return { classe: 'Excelente', cor: 'text-green-600' };
-    if (score >= 700) return { classe: 'Muito Bom', cor: 'text-blue-600' };
-    if (score >= 600) return { classe: 'Bom', cor: 'text-yellow-600' };
-    if (score >= 500) return { classe: 'Regular', cor: 'text-orange-600' };
-    if (score >= 400) return { classe: 'Ruim', cor: 'text-red-500' };
-    return { classe: 'Muito Ruim', cor: 'text-red-700' };
-  };
-
-  const scoreInfo = useMemo(() => getClassificacaoScore(dados.scoreCliente), [dados.scoreCliente]);
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
-              <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-3 rounded-xl">
-                <Calculator className="text-white" size={32} />
-              </div>
-              <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Simulador MCMV Pro
-                </h1>
-                <p className="text-gray-600 mt-1">Análise Completa de Comprometimento e Risco</p>
-              </div>
-            </div>
+      const calcularSimulacao = () => {
+        setLoading(true);
+        setError(null);
+        
+        try {
+          setTimeout(() => {
+            const faixaMCMV = getFaixaMCMV(dados.rendaFamiliar);
             
-            <button
-              onClick={calcularSimulacao}
-              disabled={loading}
-              className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50"
-            >
-              <RefreshCw className={`${loading ? 'animate-spin' : ''}`} size={20} />
-              {loading ? 'Calculando...' : 'Atualizar'}
-            </button>
+            // Valores base
+            const valorEntradaMoradia = dados.entradaMoradia ? 20000 : 0;
+            const valorEntradaTotal = (dados.precoImovel * dados.percentualEntrada / 100) - valorEntradaMoradia;
+            const valorSubsidio = Math.min(faixaMCMV.subsidio, dados.precoImovel * 0.2);
+            const valorFinanciamento = dados.precoImovel - (dados.precoImovel * dados.percentualEntrada / 100) - valorSubsidio;
+            
+            // Parcelas da entrada durante a obra (corrigidas pelo INCC - assumindo 0.5% ao mês)
+            const parcelaEntradaInicial = valorEntradaTotal > 0 ? valorEntradaTotal / dados.tempoEntradaMeses : 0;
+            const taxaINCCMensal = 0.005;
+            
+            let parcelasEntradaObra = [];
+            const mesesEntradaObra = Math.min(dados.tempoEntradaMeses, dados.tempoObraMeses);
+            
+            for (let i = 1; i <= mesesEntradaObra; i++) {
+              const fatorCorrecao = Math.pow(1 + taxaINCCMensal, i - 1);
+              parcelasEntradaObra.push(parcelaEntradaInicial * fatorCorrecao);
+            }
+            
+            // Juros de fase de obra calculados mensalmente sobre o saldo devedor
+            const taxaJurosMensal = dados.jurosFaseObra / 100 / 12;
+            let parcelasJurosObra = [];
+            let saldoLiberado = 0;
+            const liberacaoMensal = valorFinanciamento / dados.tempoObraMeses;
+            
+            for (let i = 1; i <= dados.tempoObraMeses; i++) {
+              saldoLiberado += liberacaoMensal;
+              const jurosDoMes = saldoLiberado * taxaJurosMensal;
+              parcelasJurosObra.push(jurosDoMes);
+            }
+            
+            const parcelaJurosFaseObraMedia = parcelasJurosObra.length > 0 
+              ? parcelasJurosObra.reduce((a, b) => a + b, 0) / parcelasJurosObra.length 
+              : 0;
+            
+            // Financiamento após entrega das chaves
+            const prazoFinanciamento = 360;
+            const parcelasFinanciamento = dados.sistemaAmortizacao === 'SAC' 
+              ? calcularSAC(valorFinanciamento, dados.jurosFinanciamento, prazoFinanciamento)
+              : calcularPRICE(valorFinanciamento, dados.jurosFinanciamento, prazoFinanciamento);
+            
+            // Parcelas da entrada após entrega
+            const parcelasRestantesEntrada = Math.max(0, dados.tempoEntradaMeses - dados.tempoObraMeses);
+            const taxaIPCAMensal = 0.004;
+            
+            let parcelasEntradaPosObra = [];
+            if (parcelasRestantesEntrada > 0) {
+              const ultimaParcelaObra = parcelasEntradaObra.length > 0 
+                ? parcelasEntradaObra[parcelasEntradaObra.length - 1] 
+                : parcelaEntradaInicial;
+              for (let i = 1; i <= parcelasRestantesEntrada; i++) {
+                const fatorCorrecao = Math.pow(1 + taxaIPCAMensal, i);
+                parcelasEntradaPosObra.push(ultimaParcelaObra * fatorCorrecao);
+              }
+            }
+            
+            // Comprometimento durante a obra
+            const parcelaMediaEntradaObra = parcelasEntradaObra.length > 0 
+              ? parcelasEntradaObra.reduce((a, b) => a + b, 0) / parcelasEntradaObra.length 
+              : 0;
+            const comprometimentoObra = ((parcelaMediaEntradaObra + parcelaJurosFaseObraMedia) / dados.rendaFamiliar) * 100;
+            
+            // Comprometimento após entrega
+            const parcelaFinanciamentoPrimeira = parcelasFinanciamento.length > 0 ? parcelasFinanciamento[0].parcela : 0;
+            const parcelaEntradaPosObraMedia = parcelasEntradaPosObra.length > 0 
+              ? parcelasEntradaPosObra.reduce((a, b) => a + b, 0) / parcelasEntradaPosObra.length 
+              : 0;
+            const comprometimentoPosEntrega = ((parcelaFinanciamentoPrimeira + parcelaEntradaPosObraMedia) / dados.rendaFamiliar) * 100;
+            
+            // Análise de risco
+            const riscoInadimplencia = calcularRiscoInadimplencia(dados.scoreCliente, comprometimentoPosEntrega);
+            const riscoDistrato = calcularRiscoDistrato(dados.scoreCliente, comprometimentoObra, faixaMCMV.faixa);
+            
+            // Valores de risco em reais
+            const valorRiscoInadimplencia = valorFinanciamento * (riscoInadimplencia / 100);
+            const valorRiscoDistrato = dados.precoImovel * (riscoDistrato / 100);
+            
+            setResultados({
+              faixaMCMV: faixaMCMV.faixa,
+              valorSubsidio,
+              valorEntradaTotal,
+              valorEntradaMoradia,
+              valorFinanciamento,
+              parcelaMediaEntradaObra,
+              parcelaJurosFaseObraMedia,
+              parcelaFinanciamentoPrimeira,
+              parcelaEntradaPosObraMedia,
+              comprometimentoObra,
+              comprometimentoPosEntrega,
+              riscoInadimplencia,
+              riscoDistrato,
+              valorRiscoInadimplencia,
+              valorRiscoDistrato,
+              parcelasEntradaObra: parcelasEntradaObra.slice(0, 6),
+              parcelasFinanciamento: parcelasFinanciamento.slice(0, 12),
+              parcelasJurosObra: parcelasJurosObra.slice(0, 6),
+              totalJurosObra: parcelasJurosObra.reduce((a, b) => a + b, 0)
+            });
+            
+            setLoading(false);
+          }, 500);
+        } catch (err) {
+          setError("Ocorreu um erro ao calcular a simulação. Verifique os dados e tente novamente.");
+          setLoading(false);
+          console.error(err);
+        }
+      };
+
+      useEffect(() => {
+        calcularSimulacao();
+      }, []);
+
+      const handleInputChange = (field, value) => {
+        setDados(prev => ({
+          ...prev,
+          [field]: field === 'entradaMoradia' || field === 'sistemaAmortizacao' ? value : (parseFloat(value) || 0)
+        }));
+      };
+
+      const getCorComprometimento = (percentual) => {
+        if (percentual <= 20) return 'from-green-400 to-green-600';
+        if (percentual <= 30) return 'from-yellow-400 to-yellow-600';
+        if (percentual <= 40) return 'from-orange-400 to-orange-600';
+        return 'from-red-400 to-red-600';
+      };
+
+      const getCorRisco = (percentual) => {
+        if (percentual <= 10) return 'from-green-400 to-green-600';
+        if (percentual <= 25) return 'from-yellow-400 to-yellow-600';
+        if (percentual <= 50) return 'from-orange-400 to-orange-600';
+        return 'from-red-400 to-red-600';
+      };
+
+      const getClassificacaoScore = (score) => {
+        if (score >= 800) return { classe: 'Excelente', cor: 'text-green-600' };
+        if (score >= 700) return { classe: 'Muito Bom', cor: 'text-blue-600' };
+        if (score >= 600) return { classe: 'Bom', cor: 'text-yellow-600' };
+        if (score >= 500) return { classe: 'Regular', cor: 'text-orange-600' };
+        if (score >= 400) return { classe: 'Ruim', cor: 'text-red-500' };
+        return { classe: 'Muito Ruim', cor: 'text-red-700' };
+      };
+
+      const scoreInfo = getClassificacaoScore(dados.scoreCliente);
+
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
+          <div className="max-w-7xl mx-auto">
+            {/* Header */}
+            <div className="bg-white rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
+              <div className="flex flex-col md:flex-row items-center justify-between mb-6">
+                <div className="flex items-center gap-4 mb-4 md:mb-0">
+                  <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-3 rounded-xl">
+                    <Calculator className="text-white" size={32} />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                      Simulador MCMV Pro
+                    </h1>
+                    <p className="text-gray-600 mt-1">Análise Completa de Comprometimento e Risco</p>
+                  </div>
+                </div>
+                
+                <button
+                  onClick={calcularSimulacao}
+                  disabled={loading}
+                  className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50"
+                >
+                  <RefreshCw className={`${loading ? 'animate-spin' : ''}`} size={20} />
+                  {loading ? 'Calculando...' : 'Atualizar'}
+                </button>
+              </div>
+
+              {error && (
+                <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded">
+                  <p>{error}</p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Inputs */}
+                <div className="lg:col-span-1 space-y-6">
+                  <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-6 rounded-xl">
+                    <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                      <Home className="text-blue-600" size={20} />
+                      Dados do Imóvel
+                    </h2>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Preço do Imóvel (R$)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={dados.precoImovel}
+                          onChange={(e) => handleInputChange('precoImovel', e.target.value)}
+                          className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Percentual da Entrada (%)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={dados.percentualEntrada}
+                          onChange={(e) => handleInputChange('percentualEntrada', e.target.value)}
+                          className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Prazo da Entrada (meses)</label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={dados.tempoEntradaMeses}
+                          onChange={(e) => handleInputChange('tempoEntradaMeses', e.target.value)}
+                          className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Tempo de Obra (meses)</label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={dados.tempoObraMeses}
+                          onChange={(e) => handleInputChange('tempoObraMeses', e.target.value)}
+                          className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-xl">
+                    <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                      <User className="text-green-600" size={20} />
+                      Dados do Cliente
+                    </h2>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Renda Familiar (R$)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={dados.rendaFamiliar}
+                          onChange={(e) => handleInputChange('rendaFamiliar', e.target.value)}
+                          className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Score do Cliente</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="1000"
+                          value={dados.scoreCliente}
+                          onChange={(e) => handleInputChange('scoreCliente', e.target.value)}
+                          className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+                        />
+                        <p className={`text-sm mt-1 font-medium ${scoreInfo.cor}`}>
+                          {scoreInfo.classe}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          id="entradaMoradia"
+                          checked={dados.entradaMoradia}
+                          onChange={(e) => handleInputChange('entradaMoradia', e.target.checked)}
+                          className="w-5 h-5 text-green-600 rounded focus:ring-green-500"
+                        />
+                        <label htmlFor="entradaMoradia" className="text-sm font-medium text-gray-700">
+                          Entrada Moradia CE (R$ 20.000)
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-xl">
+                    <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                      <Target className="text-purple-600" size={20} />
+                      Configurações Financeiras
+                    </h2>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Juros Fase de Obra (% a.a.)</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          value={dados.jurosFaseObra}
+                          onChange={(e) => handleInputChange('jurosFaseObra', e.target.value)}
+                          className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Juros Financiamento (% a.a.)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={dados.jurosFinanciamento}
+                          onChange={(e) => handleInputChange('jurosFinanciamento', e.target.value)}
+                          className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Sistema de Amortização</label>
+                        <select
+                          value={dados.sistemaAmortizacao}
+                          onChange={(e) => handleInputChange('sistemaAmortizacao', e.target.value)}
+                          className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                        >
+                          <option value="SAC">SAC</option>
+                          <option value="PRICE">PRICE</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Resultados */}
+                {resultados ? (
+                  <div className="lg:col-span-2 space-y-6">
+                    {/* Cards de Resumo */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-xl text-white shadow-lg">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-blue-100 text-sm">Faixa MCMV</p>
+                            <p className="text-2xl font-bold">{resultados.faixaMCMV}</p>
+                            <p className="text-blue-100 text-sm">Subsídio: R$ {resultados.valorSubsidio.toLocaleString('pt-BR')}</p>
+                          </div>
+                          <Home size={32} className="text-blue-200" />
+                        </div>
+                      </div>
+
+                      <div className="bg-gradient-to-r from-green-500 to-green-600 p-6 rounded-xl text-white shadow-lg">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-green-100 text-sm">Valor Financiamento</p>
+                            <p className="text-2xl font-bold">R$ {resultados.valorFinanciamento.toLocaleString('pt-BR')}</p>
+                            <p className="text-green-100 text-sm">Score: {dados.scoreCliente} - {scoreInfo.classe}</p>
+                          </div>
+                          <DollarSign size={32} className="text-green-200" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Mapa de Calor do Comprometimento */}
+                    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                      <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
+                        <TrendingUp className="text-purple-600" size={24} />
+                        Mapa de Calor - Comprometimento de Renda
+                      </h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="text-center">
+                          <p className="text-sm font-medium text-gray-600 mb-3">Durante a Obra</p>
+                          <div className={`bg-gradient-to-r ${getCorComprometimento(resultados.comprometimentoObra)} text-white p-6 rounded-xl shadow-lg`}>
+                            <p className="text-4xl font-bold">{resultados.comprometimentoObra.toFixed(1)}%</p>
+                            <p className="text-sm opacity-90">da renda comprometida</p>
+                          </div>
+                          <div className="mt-3 p-3 bg-gray-50 rounded-lg text-xs text-gray-600">
+                            <p>Entrada: R$ {resultados.parcelaMediaEntradaObra.toFixed(2)}</p>
+                            <p>Juros Obra: R$ {resultados.parcelaJurosFaseObraMedia.toFixed(2)}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="text-center">
+                          <p className="text-sm font-medium text-gray-600 mb-3">Após Entrega</p>
+                          <div className={`bg-gradient-to-r ${getCorComprometimento(resultados.comprometimentoPosEntrega)} text-white p-6 rounded-xl shadow-lg`}>
+                            <p className="text-4xl font-bold">{resultados.comprometimentoPosEntrega.toFixed(1)}%</p>
+                            <p className="text-sm opacity-90">da renda comprometida</p>
+                          </div>
+                          <div className="mt-3 p-3 bg-gray-50 rounded-lg text-xs text-gray-600">
+                            <p>Financiamento: R$ {resultados.parcelaFinanciamentoPrimeira.toFixed(2)}</p>
+                            <p>Entrada: R$ {resultados.parcelaEntradaPosObraMedia.toFixed(2)}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Análise de Risco */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                        <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                          <AlertTriangle className="text-orange-600" size={20} />
+                          Risco de Inadimplência
+                        </h4>
+                        
+                        <div className={`bg-gradient-to-r ${getCorRisco(resultados.riscoInadimplencia)} text-white p-4 rounded-lg mb-4`}>
+                          <p className="text-3xl font-bold">{resultados.riscoInadimplencia.toFixed(1)}%</p>
+                          <p className="text-sm opacity-90">probabilidade de inadimplência</p>
+                        </div>
+                        
+                        <div className="text-sm text-gray-600">
+                          <p>Valor em risco: <span className="font-bold text-red-600">R$ {resultados.valorRiscoInadimplencia.toLocaleString('pt-BR')}</span></p>
+                          <p className="mt-1 text-xs">Baseado no score e comprometimento</p>
+                        </div>
+                      </div>
+
+                      <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                        <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                          <Shield className="text-red-600" size={20} />
+                          Risco de Distrato
+                        </h4>
+                        
+                        <div className={`bg-gradient-to-r ${getCorRisco(resultados.riscoDistrato)} text-white p-4 rounded-lg mb-4`}>
+                          <p className="text-3xl font-bold">{resultados.riscoDistrato.toFixed(1)}%</p>
+                          <p className="text-sm opacity-90">probabilidade de distrato</p>
+                        </div>
+                        
+                        <div className="text-sm text-gray-600">
+                          <p>Valor em risco: <span className="font-bold text-red-600">R$ {resultados.valorRiscoDistrato.toLocaleString('pt-BR')}</span></p>
+                          <p className="mt-1 text-xs">Baseado no score e comprometimento durante a obra</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Detalhes das Parcelas */}
+                    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                      <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
+                        <DollarSign className="text-blue-600" size={24} />
+                        Detalhamento das Parcelas
+                      </h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <h4 className="font-medium text-gray-700 mb-3">Parcelas da Entrada (Primeiros 6 meses)</h4>
+                          <div className="bg-gray-50 rounded-lg p-4 max-h-64 overflow-y-auto">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="text-gray-500 border-b">
+                                  <th className="pb-2 text-left">Mês</th>
+                                  <th className="pb-2 text-right">Valor (R$)</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {resultados.parcelasEntradaObra.map((parcela, index) => (
+                                  <tr key={index} className="border-b border-gray-100 last:border-0">
+                                    <td className="py-2 text-gray-600">{index + 1}</td>
+                                    <td className="py-2 text-right font-medium">{parcela.toFixed(2)}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <h4 className="font-medium text-gray-700 mb-3">Juros na Fase de Obra (Primeiros 6 meses)</h4>
+                          <div className="bg-gray-50 rounded-lg p-4 max-h-64 overflow-y-auto">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="text-gray-500 border-b">
+                                  <th className="pb-2 text-left">Mês</th>
+                                  <th className="pb-2 text-right">Valor (R$)</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {resultados.parcelasJurosObra.map((juros, index) => (
+                                  <tr key={index} className="border-b border-gray-100 last:border-0">
+                                    <td className="py-2 text-gray-600">{index + 1}</td>
+                                    <td className="py-2 text-right font-medium">{juros.toFixed(2)}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-2">Total em juros na obra: R$ {resultados.totalJurosObra.toFixed(2)}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-6">
+                        <h4 className="font-medium text-gray-700 mb-3">Parcelas do Financiamento (Primeiros 12 meses)</h4>
+                        <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="text-gray-500 border-b">
+                                <th className="pb-2 text-left">Mês</th>
+                                <th className="pb-2 text-right">Parcela (R$)</th>
+                                <th className="pb-2 text-right">Amortização</th>
+                                <th className="pb-2 text-right">Juros</th>
+                                <th className="pb-2 text-right">Saldo Devedor</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {resultados.parcelasFinanciamento.map((parcela) => (
+                                <tr key={parcela.numero} className="border-b border-gray-100 last:border-0">
+                                  <td className="py-2 text-gray-600">{parcela.numero}</td>
+                                  <td className="py-2 text-right font-medium">{parcela.parcela.toFixed(2)}</td>
+                                  <td className="py-2 text-right">{parcela.amortizacao.toFixed(2)}</td>
+                                  <td className="py-2 text-right">{parcela.juros.toFixed(2)}</td>
+                                  <td className="py-2 text-right">{parcela.saldoDevedor.toFixed(2)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : loading ? (
+                  <div className="lg:col-span-2 flex flex-col items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500 mb-4"></div>
+                    <p className="text-lg text-gray-600">Calculando simulação...</p>
+                  </div>
+                ) : (
+                  <div className="lg:col-span-2 flex flex-col items-center justify-center py-12 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl">
+                    <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-full mb-4">
+                      <Calculator className="text-white" size={48} />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-2">Simulação Pronta</h2>
+                    <p className="text-gray-600 text-center max-w-md">Preencha os dados ao lado e clique em "Atualizar" para ver os resultados da simulação do financiamento imobiliário.</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-
-          {error && (
-            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded">
-              <p>{error}</p>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Inputs */}
-            <div className="lg:col-span-1 space-y-6">
-              <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-6 rounded-xl">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                  <Home className="text-blue-600" size={20} />
-                  Dados do Imóvel
-                </h2>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Preço do Imóvel (R$)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={dados.precoImovel}
-                      onChange={(e) => handleInputChange('precoImovel', Math.max(0, e.target.value))}
-                      className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Percentual da Entrada (%)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={dados.percentualEntrada}
-                      onChange={(e) => handleInputChange('percentualEntrada', Math.min(100, Math.max(0, e.target.value)))}
-                      className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Prazo da Entrada (meses)</label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={dados.tempoEntradaMeses}
-                      onChange={(e) => handleInputChange('tempoEntradaMeses', Math.max(1, e.target.value))}
-                      className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Tempo de Obra (meses)</label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={dados.tempoObraMeses}
-                      onChange={(e) => handleInputChange('tempoObraMeses', Math.max(1, e.target.value))}
-                      className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-xl">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                  <User className="text-green-600" size={20} />
-                  Dados do Cliente
-                </h2>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Renda Familiar (R$)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={dados.rendaFamiliar}
-                      onChange={(e) => handleInputChange('rendaFamiliar', Math.max(0, e.target.value))}
-                      className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Score do Cliente</label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="1000"
-                      value={dados.scoreCliente}
-                      onChange={(e) => handleInputChange('scoreCliente', Math.min(1000, Math.max(0, e.target.value)))}
-                      className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
-                    />
-                    <p className={`text-sm mt-1 font-medium ${scoreInfo.cor}`}>
-                      {scoreInfo.classe}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      id="entradaMoradia"
-                      checked={dados.entradaMoradia}
-                      onChange={(e) => handleInputChange('entradaMoradia', e.target.checked)}
-                      className="w-5 h-5 text-green-600 rounded focus:ring-green-500"
-                    />
-                    <label htmlFor="entradaMoradia" className="text-sm font-medium text-gray-700">
-                      Entrada Moradia CE (R$ 20.000)
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-xl">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                  <Target className="text-purple-600" size={20} />
-                  Configurações Financeiras
-                </h2>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Juros Fase de Obra (% a.a.)</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      value={dados.jurosFaseObra}
-                      onChange={(e) => handleInputChange('jurosFaseObra', Math.max(0, e.target.value))}
-                      className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Juros Financiamento (% a.a.)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={dados.jurosFinanciamento}
-                      onChange={(e) => handleInputChange('jurosFinanciamento', Math.max(0, e.target.value))}
-                      className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Sistema de Amortização</label>
-                    <select
-                      value={dados.sistemaAmortizacao}
-                      onChange={(e) => handleInputChange('sistemaAmortizacao', e.target.value)}
-                      className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
-                    >
-                      <option value="SAC">SAC</option>
-                      <option value="PRICE">PRICE</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Resultados */}
-            {resultados && (
-              <div className="lg:col-span-2 space-y-6">
-                {/* Cards de Resumo */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-xl text-white shadow-lg">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-blue-100 text-sm">Faixa MCMV</p>
-                        <p className="text-2xl font-bold">{resultados.faixaMCMV}</p>
-                        <p className="text-blue-100 text-sm">Subsídio: R$ {resultados.valorSubsidio.toLocaleString('pt-BR')}</p>
-                      </div>
-                      <Home size={32} className="text-blue-200" />
-                    </div>
-                  </div>
-
-                  <div className="bg-gradient-to-r from-green-500 to-green-600 p-6 rounded-xl text-white shadow-lg">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-green-100 text-sm">Valor Financiamento</p>
-                        <p className="text-2xl font-bold">R$ {resultados.valorFinanciamento.toLocaleString('pt-BR')}</p>
-                        <p className="text-green-100 text-sm">Score: {dados.scoreCliente} - {scoreInfo.classe}</p>
-                      </div>
-                      <DollarSign size={32} className="text-green-200" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Mapa de Calor do Comprometimento */}
-                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                  <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                    <TrendingUp className="text-purple-600" size={24} />
-                    Mapa de Calor - Comprometimento de Renda
-                  </h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="text-center">
-                      <p className="text-sm font-medium text-gray-600 mb-3">Durante a Obra</p>
-                      <div className={`bg-gradient-to-r ${getCorComprometimento(resultados.comprometimentoObra)} text-white p-6 rounded-xl shadow-lg`}>
-                        <p className="text-4xl font-bold">{resultados.comprometimentoObra.toFixed(1)}%</p>
-                        <p className="text-sm opacity-90">da renda comprometida</p>
-                      </div>
-                      <div className="mt-3 p-3 bg-gray-50 rounded-lg text-xs text-gray-600">
-                        <p>Entrada: R$ {resultados.parcelaMediaEntradaObra.toFixed(2)}</p>
-                        <p>Juros Obra: R$ {resultados.parcelaJurosFaseObraMedia.toFixed(2)}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="text-center">
-                      <p className="text-sm font-medium text-gray-600 mb-3">Após Entrega</p>
-                      <div className={`bg-gradient-to-r ${getCorComprometimento(resultados.comprometimentoPosEntrega)} text-white p-6 rounded-xl shadow-lg`}>
-                        <p className="text-4xl font-bold">{resultados.comprometimentoPosEntrega.toFixed(1)}%</p>
-                        <p className="text-sm opacity-90">da renda comprometida</p>
-                      </div>
-                      <div className="mt-3 p-3 bg-gray-50 rounded-lg text-xs text-gray-600">
-                        <p>Financiamento: R$ {resultados.parcelaFinanciamentoPrimeira.toFixed(2)}</p>
-                        <p>Entrada: R$ {resultados.parcelaEntradaPosObraMedia.toFixed(2)}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Análise de Risco */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                    <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <AlertTriangle className="text-orange-600" size={20} />
-                      Risco de Inadimplência
-                    </h4>
-                    
-                    <div className={`bg-gradient-to-r ${getCorRisco(resultados.riscoInadimplencia)} text-white p-4 rounded-lg mb-4`}>
-                      <p className="text-3xl font-bold">{resultados.riscoInadimplencia.toFixed(1)}%</p>
-                      <p className="text-sm opacity-90">probabilidade de inadimplência</p>
-                    </div>
-                    
-                    <div className="text-sm text-gray-600">
-                      <p>Valor em risco: <span className="font-bold text-red-600">R$ {resultados.valorRiscoInadimplencia.toLocaleString('pt-BR')}</span></p>
-                      <p className="mt-1 text-xs">Baseado no score e comprometimento</p>
-                    </div>
-                  </div>
-
-                  <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                    <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <Shield className="text-red-600" size={20} />
-                      Risco de Distrato
-                    </h4>
-                    
-                    <div className={`bg-gradient-to-r ${getCorRisco(resultados.riscoDistrato)} text-white p-4 rounded-lg mb-4`}>
-                      <p className="text-3xl font-bold">{resultados.riscoDistrato.toFixed(1)}%</p>
-                      <p className="text-sm opacity-90">probabilidade de distrato</p>
-                    </div>
-                    
-                    <div className="text-sm text-gray-600">
-                      <p>Valor em risco: <span className="font-bold text-red-600">R$ {resultados.valorRiscoDistrato.toLocaleString('pt-BR')}</span></p>
-                      <p className="mt-1 text-xs">Baseado no score e comprometimento durante a obra</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Detalhes das Parcelas */}
-                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                  <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                    <DollarSign className="text-blue-600" size={24} />
-                    Detalhamento das Parcelas
-                  </h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <h4 className="font-medium text-gray-700 mb-3">Parcelas da Entrada (Primeiros 6 meses)</h4>
-                      <div className="bg-gray-50 rounded-lg p-4 max-h-64 overflow-y-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="text-gray-500 border-b">
-                              <th className="pb-2 text-left">Mês</th>
-                              <th className="pb-2 text-right">Valor (R$)</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {resultados.parcelasEntradaObra.map((parcela, index) => (
-                              <tr key={index} className="border-b border-gray-100 last:border-0">
-                                <td className="py-2 text-gray-600">{index + 1}</td>
-                                <td className="py-2 text-right font-medium">{parcela.toFixed(2)}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-medium text-gray-700 mb-3">Juros na Fase de Obra (Primeiros 6 meses)</h4>
-                      <div className="bg-gray-50 rounded-lg p-4 max-h-64 overflow-y-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="text-gray-500 border-b">
-                              <th className="pb-2 text-left">Mês</th>
-                              <th className="pb-2 text-right">Valor (R$)</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {resultados.parcelasJurosObra.map((juros, index) => (
-                              <tr key={index} className="border-b border-gray-100 last:border-0">
-                                <td className="py-2 text-gray-600">{index + 1}</td>
-                                <td className="py-2 text-right font-medium">{juros.toFixed(2)}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-2">Total em juros na obra: R$ {resultados.totalJurosObra.toFixed(2)}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-6">
-                    <h4 className="font-medium text-gray-700 mb-3">Parcelas do Financiamento (Primeiros 12 meses)</h4>
-                    <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="text-gray-500 border-b">
-                            <th className="pb-2 text-left">Mês</th>
-                            <th className="pb-2 text-right">Parcela (R$)</th>
-                            <th className="pb-2 text-right">Amortização</th>
-                            <th className="pb-2 text-right">Juros</th>
-                            <th className="pb-2 text-right">Saldo Devedor</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {resultados.parcelasFinanciamento.map((parcela) => (
-                            <tr key={parcela.numero} className="border-b border-gray-100 last:border-0">
-                              <td className="py-2 text-gray-600">{parcela.numero}</td>
-                              <td className="py-2 text-right font-medium">{parcela.parcela.toFixed(2)}</td>
-                              <td className="py-2 text-right">{parcela.amortizacao.toFixed(2)}</td>
-                              <td className="py-2 text-right">{parcela.juros.toFixed(2)}</td>
-                              <td className="py-2 text-right">{parcela.saldoDevedor.toFixed(2)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+          
+          {/* Footer */}
+          <div className="text-center text-sm text-gray-500 mb-8">
+            <p>Simulador MCMV Pro - Este é um simulador demonstrativo. Valores podem variar conforme condições de mercado.</p>
+            <p className="mt-1">© {new Date().getFullYear()} Todos os direitos reservados</p>
           </div>
         </div>
-        
-        {/* Footer */}
-        <div className="text-center text-sm text-gray-500 mb-8">
-          <p>Simulador MCMV Pro - Este é um simulador demonstrativo. Valores podem variar conforme condições de mercado.</p>
-          <p className="mt-1">© {new Date().getFullYear()} Todos os direitos reservados</p>
-        </div>
-      </div>
-    </div>
-  );
-};
+      );
+    };
 
-export default SimuladorMCMV;
+    ReactDOM.render(<SimuladorMCMV />, document.getElementById('root'));
+  </script>
+</body>
+</html>
