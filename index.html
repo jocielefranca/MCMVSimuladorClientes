@@ -522,6 +522,17 @@
             border-left: 4px solid #f59e0b;
             margin: 20px 0;
         }
+        
+        .correction-badge {
+            display: inline-block;
+            background-color: #f59e0b;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
@@ -531,7 +542,7 @@
                 <div class="header-icon">
                     <i class="fas fa-calculator"></i>
                 </div>
-                <h1>Simulador MCMV - Cálculo Corrigido</h1>
+                <h1>Simulador MCMV - Cálculo Corrigido <span class="correction-badge">NOVO</span></h1>
             </div>
             
             <div class="correction-highlight">
@@ -539,6 +550,8 @@
                 <p>1. Cálculo correto da entrada: Valor de entrada = % entrada × valor do imóvel</p>
                 <p>2. Juros de fase de obra aplicados apenas sobre o valor já liberado pela construtora</p>
                 <p>3. Sistema SAC e PRICE implementados corretamente</p>
+                <p><strong>4. <span class="correction-badge">NOVO</span> Entrada Moradia CE subtraída do valor financiado quando habilitada</strong></p>
+                <p><strong>5. <span class="correction-badge">NOVO</span> Comprometimento pós-entrega com parcelas corrigidas pelo IPCA+1% quando prazo de entrada > prazo de obra</strong></p>
             </div>
             
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -641,7 +654,7 @@
                                 <span>Valor Financiamento</span>
                             </div>
                             <div class="card-value" id="valorFinanciamento">R$ 267.500,00</div>
-                            <div class="card-label">Entrada total: <span id="valorEntradaTotal">R$ 35.000,00</span></div>
+                            <div class="card-label">Entrada total: <span id="valorEntradaTotal">R$ 55.000,00</span></div>
                         </div>
                     </div>
                     
@@ -687,6 +700,10 @@
                                 <div class="risk-detail">
                                     <span>Total mensal:</span>
                                     <span class="risk-value" id="totalPos">R$ 2.546,80</span>
+                                </div>
+                                <div id="ipcaInfo" class="risk-detail" style="display: none;">
+                                    <span><i class="fas fa-info-circle"></i> IPCA+1% aplicado:</span>
+                                    <span class="risk-value" id="valorIPCA">R$ 0,00</span>
                                 </div>
                             </div>
                         </div>
@@ -769,6 +786,10 @@
                         <div class="legend-item">
                             <div class="legend-color bg-blue"></div>
                             <span>Juros obra = valor liberado × taxa</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color bg-purple"></div>
+                            <span>IPCA+1% aplicado após entrega</span>
                         </div>
                     </div>
                 </div>
@@ -947,8 +968,11 @@
             // Subsídio (limitado a 20% do valor do imóvel)
             const valorSubsidio = Math.min(faixaMCMV.subsidio, precoImovel * 0.2);
             
-            // Valor financiado
-            const valorFinanciamento = Math.max(0, Math.min(faixaMCMV.maxFinanciamento, precoImovel - valorEntradaReal - valorSubsidio));
+            // CORREÇÃO 1: Subtrair auxílio moradia do valor financiado quando habilitado
+            const valorFinanciamento = Math.max(0, Math.min(
+                faixaMCMV.maxFinanciamento, 
+                precoImovel - valorEntradaReal - valorSubsidio - valorEntradaMoradia
+            ));
             
             // Parcelas da entrada durante a obra (CORREÇÃO IMPLEMENTADA)
             const parcelaEntradaBase = valorEntradaReal / tempoEntradaMeses;
@@ -989,7 +1013,34 @@
             
             // Comprometimento após entrega
             const parcelaFinanciamentoPrimeira = parcelasFinanciamento[0].parcela;
-            const comprometimentoPosEntrega = (parcelaFinanciamentoPrimeira / rendaFamiliar) * 100;
+            
+            // CORREÇÃO 2: Considerar parcelas de entrada no pós-entrega se tempoEntrada > tempoObra
+            let parcelaEntradaPosObra = 0;
+            let valorIPCA = 0;
+            let totalMensalPosEntrega = parcelaFinanciamentoPrimeira;
+            let mostrarIPCAInfo = false;
+            
+            if (tempoEntradaMeses > tempoObraMeses) {
+                const parcelasRestantes = tempoEntradaMeses - tempoObraMeses;
+                const taxaIPCAMensal = 0.005; // 0.5% ao mês (IPCA +1%)
+                
+                // Calcular a parcela de entrada no último mês da obra
+                const parcelaBase = parcelasEntradaObra[tempoObraMeses-1];
+                
+                // Calcular média das parcelas restantes corrigidas pelo IPCA+1
+                let somaParcelasRestantes = 0;
+                for (let k = 1; k <= parcelasRestantes; k++) {
+                    const parcelaCorrigida = parcelaBase * Math.pow(1 + taxaIPCAMensal, k);
+                    somaParcelasRestantes += parcelaCorrigida;
+                }
+                
+                parcelaEntradaPosObra = somaParcelasRestantes / parcelasRestantes;
+                valorIPCA = parcelaEntradaPosObra - parcelaBase;
+                totalMensalPosEntrega += parcelaEntradaPosObra;
+                mostrarIPCAInfo = true;
+            }
+            
+            const comprometimentoPosEntrega = (totalMensalPosEntrega / rendaFamiliar) * 100;
             
             // Calcular métricas de risco
             const score = calcularScore(rendaFamiliar, comprometimentoPosEntrega);
@@ -1031,8 +1082,19 @@
             document.getElementById('totalObra').textContent = formatarMoeda(parcelasEntradaObra[0] + jurosFaseObraArray[4]);
             
             document.getElementById('valorFinanciamentoMensal').textContent = formatarMoeda(parcelaFinanciamentoPrimeira);
-            document.getElementById('valorEntradaPos').textContent = formatarMoeda(0);
-            document.getElementById('totalPos').textContent = formatarMoeda(parcelaFinanciamentoPrimeira);
+            document.getElementById('valorEntradaPos').textContent = formatarMoeda(parcelaEntradaPosObra);
+            document.getElementById('totalPos').textContent = formatarMoeda(totalMensalPosEntrega);
+            
+            // Atualizar informações sobre IPCA
+            const ipcaInfo = document.getElementById('ipcaInfo');
+            const valorIPCAElement = document.getElementById('valorIPCA');
+            
+            if (mostrarIPCAInfo) {
+                ipcaInfo.style.display = 'flex';
+                valorIPCAElement.textContent = formatarMoeda(valorIPCA);
+            } else {
+                ipcaInfo.style.display = 'none';
+            }
             
             // Atualizar parcelas
             const parcelasEntradaElement = document.getElementById('parcelasEntrada');
@@ -1084,3 +1146,4 @@
     </script>
 </body>
 </html>
+
