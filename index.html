@@ -3,38 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador MCMV - Cálculo Corrigido</title>
+    <title>Simulador MCMV</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary: #2563eb;
-            --primary-light: #dbeafe;
-            --secondary: #10b981;
-            --secondary-light: #d1fae5;
-            --warning: #f59e0b;
-            --warning-light: #fef3c7;
-            --danger: #ef4444;
-            --danger-light: #fee2e2;
-            --info: #8b5cf6;
-            --info-light: #ede9fe;
-            --gray-50: #f9fafb;
-            --gray-100: #f3f4f6;
-            --gray-200: #e5e7eb;
-            --gray-700: #374151;
-            --gray-800: #1f2937;
-            --gray-900: #111827;
+            --primary: #2c6fbb;
+            --primary-light: #e6f0fa;
+            --secondary: #28a745;
+            --secondary-light: #e6f4ea;
+            --accent: #8a4d76;
+            --accent-light: #f5eef4;
+            --dark: #2c3e50;
+            --light: #f8f9fa;
+            --gray: #6c757d;
+            --border: #dee2e6;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --info: #17a2b8;
+            --shadow: rgba(0, 0, 0, 0.08);
         }
         
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
         }
         
         body {
-            background: linear-gradient(135deg, #f5f7fa, #e4e7eb);
-            color: var(--gray-900);
+            background: linear-gradient(135deg, #f0f5ff, #e6ecf7);
+            color: var(--dark);
             line-height: 1.6;
             min-height: 100vh;
             padding: 20px;
@@ -48,56 +47,76 @@
         
         .card {
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
             padding: 30px;
             margin-bottom: 24px;
             transition: all 0.3s ease;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
         }
         
         .header {
             display: flex;
             align-items: center;
             gap: 16px;
-            margin-bottom: 24px;
+            margin-bottom: 30px;
         }
         
         .header-icon {
             background-color: var(--primary-light);
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+            box-shadow: 0 4px 8px rgba(44, 111, 187, 0.15);
         }
         
         .header-icon i {
-            font-size: 24px;
+            font-size: 28px;
             color: var(--primary);
         }
         
         h1 {
-            font-size: 28px;
+            font-size: 32px;
             font-weight: 700;
-            color: var(--gray-900);
+            color: var(--dark);
+            letter-spacing: -0.5px;
         }
         
         h2 {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 600;
-            color: var(--gray-800);
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--gray-200);
+            color: var(--dark);
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
         }
         
         h3 {
             font-size: 18px;
             font-weight: 600;
-            color: var(--gray-800);
+            color: var(--dark);
             margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        h3 i {
+            color: var(--primary);
         }
         
         .grid {
@@ -128,7 +147,7 @@
         }
         
         .input-group {
-            margin-bottom: 16px;
+            margin-bottom: 20px;
             position: relative;
         }
         
@@ -136,24 +155,26 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 500;
-            color: var(--gray-700);
+            color: var(--dark);
+            font-size: 15px;
         }
         
         input, select {
             width: 100%;
-            padding: 12px 16px;
-            border: 1px solid var(--gray-200);
-            border-radius: 8px;
+            padding: 14px 16px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
             font-size: 16px;
             transition: all 0.2s;
-            background-color: var(--gray-50);
+            background-color: white;
+            color: var(--dark);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
         }
         
         input:focus, select:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-            background-color: white;
+            box-shadow: 0 0 0 3px rgba(44, 111, 187, 0.15);
         }
         
         .checkbox-group {
@@ -161,34 +182,37 @@
             align-items: center;
             gap: 12px;
             margin-bottom: 16px;
-            padding: 12px;
-            background-color: var(--gray-50);
-            border-radius: 8px;
+            padding: 14px;
+            background-color: var(--primary-light);
+            border-radius: 10px;
+            border-left: 4px solid var(--primary);
         }
         
         .checkbox-group input {
             width: auto;
+            transform: scale(1.2);
         }
         
         .btn {
             display: inline-block;
-            background: linear-gradient(to right, #2563eb, #1d4ed8);
+            background: linear-gradient(to right, var(--primary), #1a5da3);
             color: white;
-            padding: 14px 28px;
+            padding: 16px 32px;
             border: none;
-            border-radius: 8px;
-            font-size: 16px;
+            border-radius: 10px;
+            font-size: 17px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             text-align: center;
-            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
+            box-shadow: 0 5px 15px rgba(44, 111, 187, 0.3);
+            letter-spacing: 0.5px;
         }
         
         .btn:hover {
-            background: linear-gradient(to right, #1d4ed8, #1e40af);
+            background: linear-gradient(to right, #1a5da3, #154e8a);
             transform: translateY(-3px);
-            box-shadow: 0 6px 12px rgba(37, 99, 235, 0.4);
+            box-shadow: 0 8px 20px rgba(44, 111, 187, 0.4);
         }
         
         .btn:active {
@@ -201,48 +225,61 @@
         }
         
         .btn i {
-            margin-right: 8px;
+            margin-right: 10px;
         }
         
         .summary-card {
-            background-color: var(--primary-light);
+            background-color: white;
             border-radius: 12px;
-            padding: 20px;
+            padding: 22px;
             height: 100%;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 12px var(--shadow);
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .summary-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary);
+        }
+        
+        .summary-card.green::before {
+            background: var(--secondary);
+        }
+        
+        .summary-card.purple::before {
+            background: var(--accent);
         }
         
         .summary-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
         }
         
         .summary-card.green {
-            background-color: var(--secondary-light);
+            border-color: rgba(40, 167, 69, 0.2);
         }
         
         .summary-card.purple {
-            background-color: var(--info-light);
-        }
-        
-        .summary-card.orange {
-            background-color: var(--warning-light);
-        }
-        
-        .summary-card.red {
-            background-color: var(--danger-light);
+            border-color: rgba(138, 77, 118, 0.2);
         }
         
         .card-icon {
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-bottom: 16px;
+            gap: 10px;
+            margin-bottom: 18px;
         }
         
         .card-icon i {
-            font-size: 24px;
+            font-size: 26px;
             color: var(--primary);
         }
         
@@ -251,32 +288,24 @@
         }
         
         .summary-card.purple .card-icon i {
-            color: var(--info);
-        }
-        
-        .summary-card.orange .card-icon i {
-            color: var(--warning);
-        }
-        
-        .summary-card.red .card-icon i {
-            color: var(--danger);
+            color: var(--accent);
         }
         
         .card-value {
             font-size: 28px;
             font-weight: 700;
             margin-bottom: 8px;
-            color: var(--gray-900);
+            color: var(--dark);
         }
         
         .card-label {
-            font-size: 14px;
-            color: var(--gray-700);
+            font-size: 15px;
+            color: var(--gray);
         }
         
         .risk-meter {
             height: 12px;
-            background-color: var(--gray-200);
+            background-color: #e9ecef;
             border-radius: 6px;
             margin: 16px 0;
             overflow: hidden;
@@ -292,7 +321,7 @@
             display: flex;
             justify-content: space-between;
             font-size: 12px;
-            color: var(--gray-700);
+            color: var(--gray);
         }
         
         .progress-container {
@@ -306,44 +335,44 @@
         }
         
         .progress-bar {
-            height: 12px;
-            background-color: var(--gray-200);
-            border-radius: 6px;
+            height: 10px;
+            background-color: #e9ecef;
+            border-radius: 5px;
             overflow: hidden;
         }
         
         .progress-fill {
             height: 100%;
-            border-radius: 6px;
+            border-radius: 5px;
         }
         
-        .bg-green { background-color: #10b981; }
-        .bg-yellow { background-color: #f59e0b; }
-        .bg-orange { background-color: #f97316; }
-        .bg-red { background-color: #ef4444; }
-        .bg-blue { background-color: #3b82f6; }
-        .bg-purple { background-color: #8b5cf6; }
+        .bg-green { background-color: var(--success); }
+        .bg-yellow { background-color: var(--warning); }
+        .bg-orange { background-color: #fd7e14; }
+        .bg-red { background-color: var(--danger); }
+        .bg-blue { background-color: var(--primary); }
+        .bg-purple { background-color: var(--accent); }
         
         .parcelas-container {
             background-color: white;
-            border: 1px solid var(--gray-200);
-            border-radius: 8px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
             padding: 16px;
-            max-height: 200px;
+            max-height: 220px;
             overflow-y: auto;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
         }
         
         .parcela-item {
             display: flex;
             justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid var(--gray-100);
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
             transition: background-color 0.2s;
         }
         
         .parcela-item:hover {
-            background-color: var(--gray-50);
+            background-color: #f8f9fa;
         }
         
         .parcela-item:last-child {
@@ -355,10 +384,11 @@
             gap: 16px;
             flex-wrap: wrap;
             padding: 16px;
-            background-color: var(--gray-50);
-            border-radius: 8px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
             margin-top: 16px;
             justify-content: center;
+            border: 1px solid var(--border);
         }
         
         .legend-item {
@@ -366,9 +396,10 @@
             align-items: center;
             gap: 8px;
             font-size: 14px;
-            padding: 4px 12px;
+            padding: 6px 14px;
             border-radius: 20px;
-            background-color: rgba(255, 255, 255, 0.8);
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         
         .legend-color {
@@ -379,16 +410,17 @@
         
         .risk-details {
             padding: 16px;
-            border-radius: 8px;
-            background-color: var(--gray-50);
+            border-radius: 10px;
+            background-color: #f8f9fa;
+            border: 1px solid var(--border);
         }
         
         .risk-detail {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 10px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--gray-200);
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
         }
         
         .risk-detail:last-child {
@@ -399,7 +431,7 @@
         
         .risk-value {
             font-weight: 600;
-            color: var(--gray-800);
+            color: var(--dark);
         }
         
         .score-container {
@@ -413,12 +445,12 @@
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            background: conic-gradient(#10b981 0% 70%, #f59e0b 70% 85%, #ef4444 85% 100%);
+            background: conic-gradient(var(--success) 0% 70%, var(--warning) 70% 85%, var(--danger) 85% 100%);
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         
         .score-inner {
@@ -431,18 +463,18 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
         }
         
         .score-number {
             font-size: 24px;
             font-weight: 700;
-            color: var(--gray-900);
+            color: var(--dark);
         }
         
         .score-label {
             font-size: 12px;
-            color: var(--gray-700);
+            color: var(--gray);
         }
         
         .risk-indicator {
@@ -466,7 +498,7 @@
         .tooltip .tooltip-text {
             visibility: hidden;
             width: 220px;
-            background-color: var(--gray-800);
+            background-color: var(--dark);
             color: #fff;
             text-align: center;
             border-radius: 6px;
@@ -493,7 +525,7 @@
             top: 20px;
             right: 20px;
             padding: 15px 25px;
-            background-color: #10b981;
+            background-color: var(--success);
             color: white;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
@@ -510,28 +542,71 @@
             text-align: center;
             margin-top: 30px;
             padding-top: 20px;
-            border-top: 1px solid var(--gray-200);
-            color: var(--gray-700);
+            border-top: 1px solid var(--border);
+            color: var(--gray);
             font-size: 14px;
         }
         
-        .correction-highlight {
-            background-color: #fffbdd;
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, var(--border), transparent);
+            margin: 30px 0;
+        }
+        
+        .input-with-icon {
+            position: relative;
+        }
+        
+        .input-with-icon i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray);
+        }
+        
+        .input-with-icon input {
+            padding-left: 45px;
+        }
+        
+        .result-highlight {
+            background: linear-gradient(45deg, var(--primary-light), #e6f0fa);
             padding: 20px;
-            border-radius: 8px;
-            border-left: 4px solid #f59e0b;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
             margin: 20px 0;
         }
         
-        .correction-badge {
-            display: inline-block;
-            background-color: #f59e0b;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            margin-left: 8px;
-            vertical-align: middle;
+        .result-highlight h3 {
+            color: var(--primary);
+            border-bottom: 1px dashed rgba(44, 111, 187, 0.3);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+                gap: 20px;
+            }
+            
+            .header-icon {
+                margin: 0 auto;
+            }
+            
+            h1 {
+                font-size: 28px;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            .btn {
+                padding: 14px;
+                font-size: 16px;
+            }
         }
     </style>
 </head>
@@ -540,103 +615,111 @@
         <div class="card">
             <div class="header">
                 <div class="header-icon">
-                    <i class="fas fa-calculator"></i>
+                    <i class="fas fa-home"></i>
                 </div>
-                <h1>Simulador MCMV - Cálculo Corrigido <span class="correction-badge">NOVO</span></h1>
-            </div>
-            
-            <div class="correction-highlight">
-                <h3><i class="fas fa-check-circle" style="color: #10b981;"></i> Correções Implementadas</h3>
-                <p>1. Cálculo correto da entrada: Valor de entrada = % entrada × valor do imóvel</p>
-                <p>2. Juros de fase de obra aplicados apenas sobre o valor já liberado pela construtora</p>
-                <p>3. Sistema SAC e PRICE implementados corretamente</p>
-                <p><strong>4. <span class="correction-badge">NOVO</span> Entrada Moradia CE subtraída do valor financiado quando habilitada</strong></p>
-                <p><strong>5. <span class="correction-badge">NOVO</span> Comprometimento pós-entrega com parcelas corrigidas pelo IPCA+1% quando prazo de entrada > prazo de obra</strong></p>
+                <h1>Simulador MCMV</h1>
             </div>
             
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <!-- Inputs -->
                 <div>
-                    <h2>Dados do Imóvel e Cliente</h2>
+                    <h2><i class="fas fa-edit"></i> Dados do Imóvel e Cliente</h2>
                     
                     <div class="grid grid-cols-2 gap-4">
                         <div class="input-group">
-                            <label for="precoImovel">Preço do Imóvel (R$)</label>
-                            <input type="number" id="precoImovel" value="350000" min="50000" step="1000">
+                            <label for="precoImovel">Preço do Imóvel</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-tag"></i>
+                                <input type="number" id="precoImovel" value="350000" min="50000" step="1000" placeholder="R$">
+                            </div>
                         </div>
                         
                         <div class="input-group">
-                            <label for="rendaFamiliar">Renda Familiar (R$)</label>
-                            <input type="number" id="rendaFamiliar" value="8000" min="1000" step="100">
+                            <label for="rendaFamiliar">Renda Familiar</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-money-bill-wave"></i>
+                                <input type="number" id="rendaFamiliar" value="8000" min="1000" step="100" placeholder="R$">
+                            </div>
                         </div>
                         
                         <div class="input-group">
-                            <label for="percentualEntrada">Percentual da Entrada (%)</label>
-                            <input type="number" id="percentualEntrada" value="10" min="5" max="100" step="1">
+                            <label for="percentualEntrada">Entrada (%)</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-percent"></i>
+                                <input type="number" id="percentualEntrada" value="10" min="5" max="100" step="1" placeholder="%">
+                            </div>
                         </div>
                         
                         <div class="input-group">
-                            <label for="tempoEntradaMeses">Prazo da Entrada (meses)</label>
-                            <input type="number" id="tempoEntradaMeses" value="48" min="6" max="60" step="6">
+                            <label for="tempoEntradaMeses">Prazo da Entrada</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-calendar-alt"></i>
+                                <input type="number" id="tempoEntradaMeses" value="48" min="6" max="60" step="6" placeholder="meses">
+                            </div>
                         </div>
                         
                         <div class="input-group">
-                            <label for="tempoObraMeses">Tempo de Obra (meses)</label>
-                            <input type="number" id="tempoObraMeses" value="36" min="6" max="60" step="6">
+                            <label for="tempoObraMeses">Tempo de Obra</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-hard-hat"></i>
+                                <input type="number" id="tempoObraMeses" value="36" min="6" max="60" step="6" placeholder="meses">
+                            </div>
                         </div>
                         
                         <div class="input-group">
-                            <label for="jurosFaseObra">Juros Fase de Obra (% a.a.)</label>
-                            <input type="number" step="0.1" id="jurosFaseObra" value="0.5" min="0.1" max="5" step="0.1">
+                            <label for="jurosFaseObra">Juros Fase de Obra</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-chart-line"></i>
+                                <input type="number" step="0.1" id="jurosFaseObra" value="0.5" min="0.1" max="5" step="0.1" placeholder="% a.a.">
+                            </div>
                         </div>
                         
                         <div class="input-group">
-                            <label for="jurosFinanciamento">Juros Financiamento (% a.a.)</label>
-                            <input type="number" step="0.01" id="jurosFinanciamento" value="8.16" min="4" max="15" step="0.1">
+                            <label for="jurosFinanciamento">Juros Financiamento</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-percentage"></i>
+                                <input type="number" step="0.01" id="jurosFinanciamento" value="8.16" min="4" max="15" step="0.1" placeholder="% a.a.">
+                            </div>
                         </div>
                         
                         <div class="input-group">
                             <label for="sistemaAmortizacao">Sistema de Amortização</label>
-                            <select id="sistemaAmortizacao">
-                                <option value="SAC">SAC</option>
-                                <option value="PRICE">PRICE</option>
-                            </select>
+                            <div class="input-with-icon">
+                                <i class="fas fa-calculator"></i>
+                                <select id="sistemaAmortizacao">
+                                    <option value="SAC">SAC</option>
+                                    <option value="PRICE">PRICE</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                     
                     <div class="checkbox-group">
                         <input type="checkbox" id="entradaMoradia" checked>
-                        <label for="entradaMoradia">Entrada Moradia CE (R$ 20.000)</label>
+                        <label for="entradaMoradia">Incluir Entrada Moradia CE (R$ 20.000)</label>
                     </div>
                     
                     <button id="calcularBtn" class="btn btn-block">
-                        <i class="fas fa-sync-alt"></i> Calcular Simulação
+                        <i class="fas fa-calculator"></i> Calcular Financiamento
                     </button>
                     
-                    <div class="risk-details mt-6">
-                        <h3>Exemplo de Cálculo Corrigido</h3>
-                        <div class="risk-detail">
-                            <span>Valor do Imóvel:</span>
-                            <span class="risk-value">R$ 350.000,00</span>
-                        </div>
-                        <div class="risk-detail">
-                            <span>Entrada (10%):</span>
-                            <span class="risk-value">R$ 35.000,00</span>
-                        </div>
-                        <div class="risk-detail">
-                            <span>Parcela entrada (48 meses):</span>
-                            <span class="risk-value">R$ 729,17</span>
-                        </div>
-                        <div class="risk-detail">
-                            <span>Juros Fase de Obra (Mês 5):</span>
-                            <span class="risk-value">R$ 120,00</span>
-                        </div>
+                    <div class="section-divider"></div>
+                    
+                    <div class="result-highlight">
+                        <h3><i class="fas fa-info-circle"></i> Informações Importantes</h3>
+                        <p>Este simulador considera as regras atuais do programa Minha Casa Minha Vida, incluindo:</p>
+                        <ul style="padding-left: 20px; margin-top: 10px;">
+                            <li>Faixas de renda e subsídios correspondentes</li>
+                            <li>Cálculo de juros durante a fase de obra</li>
+                            <li>Correção de valores pelo INCC durante a construção</li>
+                            <li>Opção de sistema SAC ou PRICE para financiamento</li>
+                        </ul>
                     </div>
                 </div>
                 
                 <!-- Resultados -->
                 <div>
-                    <h2>Resultados da Simulação</h2>
+                    <h2><i class="fas fa-chart-bar"></i> Resultados da Simulação</h2>
                     
                     <div class="grid grid-cols-2 gap-4 mb-6">
                         <div class="summary-card">
@@ -658,7 +741,7 @@
                         </div>
                     </div>
                     
-                    <h3>Detalhamento de Pagamentos</h3>
+                    <h3><i class="fas fa-file-invoice-dollar"></i> Detalhamento de Pagamentos</h3>
                     <div class="grid grid-cols-2 gap-4 mb-6">
                         <div class="summary-card">
                             <div class="card-icon">
@@ -682,7 +765,7 @@
                             </div>
                         </div>
                         
-                        <div class="summary-card">
+                        <div class="summary-card green">
                             <div class="card-icon">
                                 <i class="fas fa-key"></i>
                                 <span>Após Entrega</span>
@@ -709,7 +792,7 @@
                         </div>
                     </div>
                     
-                    <h3>Detalhamento das Parcelas</h3>
+                    <h3><i class="fas fa-calendar-check"></i> Detalhamento das Parcelas</h3>
                     <div class="grid grid-cols-2 gap-4 mb-6">
                         <div>
                             <div class="card-icon">
@@ -780,28 +863,28 @@
                     
                     <div class="legend">
                         <div class="legend-item">
-                            <div class="legend-color bg-green"></div>
-                            <span>Entrada = % entrada × valor imóvel</span>
+                            <div class="legend-color bg-blue"></div>
+                            <span>Parcela de entrada</span>
                         </div>
                         <div class="legend-item">
-                            <div class="legend-color bg-blue"></div>
-                            <span>Juros obra = valor liberado × taxa</span>
+                            <div class="legend-color bg-green"></div>
+                            <span>Financiamento</span>
                         </div>
                         <div class="legend-item">
                             <div class="legend-color bg-purple"></div>
-                            <span>IPCA+1% aplicado após entrega</span>
+                            <span>Correção monetária</span>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="footer">
-            Simulador MCMV - Desenvolvido com ❤️ para cálculos precisos | Correções implementadas conforme solicitado
+            Simulador MCMV - Desenvolvido para cálculos precisos de financiamento imobiliário | Versão 2.0
         </div>
     </div>
 
     <div class="notification" id="notification">
-        Simulação atualizada com sucesso!
+        <i class="fas fa-check-circle"></i> Simulação atualizada com sucesso!
     </div>
 
     <script>
@@ -857,73 +940,6 @@
             return parcelas_array;
         }
 
-        function calcularScore(renda, comprometimentoPosEntrega) {
-            // Score baseado na renda e comprometimento pós-entrega
-            let score = 600; // base
-            
-            // Ajuste pela renda
-            if (renda > 10000) score += 150;
-            else if (renda > 7000) score += 100;
-            else if (renda > 4000) score += 50;
-            else if (renda > 2600) score += 25;
-            
-            // Ajuste pelo comprometimento
-            if (comprometimentoPosEntrega < 20) score += 150;
-            else if (comprometimentoPosEntrega < 25) score += 100;
-            else if (comprometimentoPosEntrega < 30) score += 50;
-            else if (comprometimentoPosEntrega < 35) score += 25;
-            else if (comprometimentoPosEntrega < 40) score -= 50;
-            else score -= 150;
-            
-            // Limitar entre 300 e 900
-            return Math.min(900, Math.max(300, score));
-        }
-
-        function calcularRiscoInadimplencia(comprometimentoPosEntrega, score) {
-            // Baseado no comprometimento pós-obra e no score
-            let risco = 5; // base 5%
-            
-            // Aumento pelo comprometimento
-            if (comprometimentoPosEntrega > 30) {
-                risco += (comprometimentoPosEntrega - 30);
-            }
-            
-            // Redução pelo score
-            if (score > 750) {
-                risco -= 3;
-            } else if (score > 650) {
-                risco -= 1.5;
-            } else if (score < 500) {
-                risco += 5;
-            } else if (score < 600) {
-                risco += 2.5;
-            }
-            
-            return Math.max(1, Math.min(50, risco));
-        }
-
-        function calcularRiscoDistrato(comprometimentoObra, score) {
-            // Baseado no comprometimento durante a obra e no score
-            let risco = 3; // base 3%
-            
-            if (comprometimentoObra > 30) {
-                risco += (comprometimentoObra - 30) / 2;
-            }
-            
-            // Redução pelo score
-            if (score > 750) {
-                risco -= 1.5;
-            } else if (score > 650) {
-                risco -= 0.75;
-            } else if (score < 500) {
-                risco += 4;
-            } else if (score < 600) {
-                risco += 2;
-            }
-            
-            return Math.max(1, Math.min(30, risco));
-        }
-
         function formatarMoeda(valor) {
             return new Intl.NumberFormat('pt-BR', { 
                 style: 'currency', 
@@ -960,7 +976,7 @@
             // Calcular faixa MCMV
             const faixaMCMV = getFaixaMCMV(rendaFamiliar);
             
-            // CÁLCULO CORRIGIDO DA ENTRADA: valorEntrada = percentualEntrada * precoImovel
+            // Cálculo da entrada
             const valorEntradaReal = precoImovel * (percentualEntrada / 100);
             const valorEntradaMoradia = entradaMoradia ? 20000 : 0;
             const valorEntradaTotal = valorEntradaReal + valorEntradaMoradia;
@@ -968,13 +984,13 @@
             // Subsídio (limitado a 20% do valor do imóvel)
             const valorSubsidio = Math.min(faixaMCMV.subsidio, precoImovel * 0.2);
             
-            // CORREÇÃO 1: Subtrair auxílio moradia do valor financiado quando habilitado
+            // Valor financiamento
             const valorFinanciamento = Math.max(0, Math.min(
                 faixaMCMV.maxFinanciamento, 
                 precoImovel - valorEntradaReal - valorSubsidio - valorEntradaMoradia
             ));
             
-            // Parcelas da entrada durante a obra (CORREÇÃO IMPLEMENTADA)
+            // Parcelas da entrada durante a obra
             const parcelaEntradaBase = valorEntradaReal / tempoEntradaMeses;
             const taxaINCCMensal = 0.005; // 0.5% ao mês
             
@@ -984,14 +1000,12 @@
                 parcelasEntradaObra.push(parcelaEntradaBase * fatorCorrecao);
             }
             
-            // CÁLCULO CORRIGIDO DOS JUROS NA FASE DE OBRA: juros sobre valor liberado (CORREÇÃO IMPLEMENTADA)
+            // Cálculo dos juros na fase de obra
             let jurosFaseObraArray = [];
             for (let i = 1; i <= tempoObraMeses; i++) {
-                // Percentual liberado até o mês i: proporcional ao tempo
                 const percentualLiberado = i / tempoObraMeses;
                 const valorLiberado = valorFinanciamento * percentualLiberado;
                 
-                // Juros sobre o valor já liberado
                 const juros = valorLiberado * (jurosFaseObra / 100 / 12);
                 jurosFaseObraArray.push(juros);
             }
@@ -1014,7 +1028,6 @@
             // Comprometimento após entrega
             const parcelaFinanciamentoPrimeira = parcelasFinanciamento[0].parcela;
             
-            // CORREÇÃO 2: Considerar parcelas de entrada no pós-entrega se tempoEntrada > tempoObra
             let parcelaEntradaPosObra = 0;
             let valorIPCA = 0;
             let totalMensalPosEntrega = parcelaFinanciamentoPrimeira;
@@ -1024,10 +1037,8 @@
                 const parcelasRestantes = tempoEntradaMeses - tempoObraMeses;
                 const taxaIPCAMensal = 0.005; // 0.5% ao mês (IPCA +1%)
                 
-                // Calcular a parcela de entrada no último mês da obra
                 const parcelaBase = parcelasEntradaObra[tempoObraMeses-1];
                 
-                // Calcular média das parcelas restantes corrigidas pelo IPCA+1
                 let somaParcelasRestantes = 0;
                 for (let k = 1; k <= parcelasRestantes; k++) {
                     const parcelaCorrigida = parcelaBase * Math.pow(1 + taxaIPCAMensal, k);
@@ -1041,18 +1052,6 @@
             }
             
             const comprometimentoPosEntrega = (totalMensalPosEntrega / rendaFamiliar) * 100;
-            
-            // Calcular métricas de risco
-            const score = calcularScore(rendaFamiliar, comprometimentoPosEntrega);
-            const riscoInadimplencia = calcularRiscoInadimplencia(comprometimentoPosEntrega, score);
-            const riscoDistrato = calcularRiscoDistrato(comprometimentoObra, score);
-            
-            // Determinar classificação do score
-            let scoreLabel = '';
-            if (score >= 800) scoreLabel = 'Excelente';
-            else if (score >= 700) scoreLabel = 'Bom';
-            else if (score >= 600) scoreLabel = 'Regular';
-            else scoreLabel = 'Baixo';
             
             // Atualizar a interface com os resultados
             document.getElementById('faixaMCMV').textContent = faixaMCMV.faixa;
@@ -1146,4 +1145,3 @@
     </script>
 </body>
 </html>
-
