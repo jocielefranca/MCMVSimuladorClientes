@@ -33,9 +33,11 @@
         }
         
         body {
-            background-color: var(--gray-100);
+            background: linear-gradient(135deg, #f5f7fa, #e4e7eb);
             color: var(--gray-900);
             line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
         }
         
         .container {
@@ -47,9 +49,10 @@
         .card {
             background: white;
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
-            padding: 24px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 30px;
             margin-bottom: 24px;
+            transition: all 0.3s ease;
         }
         
         .header {
@@ -67,6 +70,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
         }
         
         .header-icon i {
@@ -125,6 +129,7 @@
         
         .input-group {
             margin-bottom: 16px;
+            position: relative;
         }
         
         label {
@@ -141,12 +146,14 @@
             border-radius: 8px;
             font-size: 16px;
             transition: all 0.2s;
+            background-color: var(--gray-50);
         }
         
         input:focus, select:focus {
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            background-color: white;
         }
         
         .checkbox-group {
@@ -154,6 +161,9 @@
             align-items: center;
             gap: 12px;
             margin-bottom: 16px;
+            padding: 12px;
+            background-color: var(--gray-50);
+            border-radius: 8px;
         }
         
         .checkbox-group input {
@@ -162,21 +172,27 @@
         
         .btn {
             display: inline-block;
-            background-color: var(--primary);
+            background: linear-gradient(to right, #2563eb, #1d4ed8);
             color: white;
-            padding: 12px 24px;
+            padding: 14px 28px;
             border: none;
             border-radius: 8px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
             text-align: center;
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
         }
         
         .btn:hover {
-            background-color: #1d4ed8;
-            transform: translateY(-2px);
+            background: linear-gradient(to right, #1d4ed8, #1e40af);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(37, 99, 235, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
         }
         
         .btn-block {
@@ -184,11 +200,22 @@
             width: 100%;
         }
         
+        .btn i {
+            margin-right: 8px;
+        }
+        
         .summary-card {
             background-color: var(--primary-light);
-            border-radius: 8px;
-            padding: 16px;
+            border-radius: 12px;
+            padding: 20px;
             height: 100%;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .summary-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
         }
         
         .summary-card.green {
@@ -211,11 +238,11 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
         }
         
         .card-icon i {
-            font-size: 20px;
+            font-size: 24px;
             color: var(--primary);
         }
         
@@ -236,9 +263,10 @@
         }
         
         .card-value {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 700;
-            margin-bottom: 4px;
+            margin-bottom: 8px;
+            color: var(--gray-900);
         }
         
         .card-label {
@@ -247,16 +275,17 @@
         }
         
         .risk-meter {
-            height: 8px;
+            height: 12px;
             background-color: var(--gray-200);
-            border-radius: 4px;
-            margin: 12px 0;
+            border-radius: 6px;
+            margin: 16px 0;
             overflow: hidden;
         }
         
         .risk-meter-fill {
             height: 100%;
-            border-radius: 4px;
+            border-radius: 6px;
+            transition: width 0.5s ease;
         }
         
         .risk-labels {
@@ -277,15 +306,15 @@
         }
         
         .progress-bar {
-            height: 10px;
+            height: 12px;
             background-color: var(--gray-200);
-            border-radius: 5px;
+            border-radius: 6px;
             overflow: hidden;
         }
         
         .progress-fill {
             height: 100%;
-            border-radius: 5px;
+            border-radius: 6px;
         }
         
         .bg-green { background-color: #10b981; }
@@ -302,13 +331,19 @@
             padding: 16px;
             max-height: 200px;
             overflow-y: auto;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
         }
         
         .parcela-item {
             display: flex;
             justify-content: space-between;
-            padding: 8px 0;
+            padding: 10px 0;
             border-bottom: 1px solid var(--gray-100);
+            transition: background-color 0.2s;
+        }
+        
+        .parcela-item:hover {
+            background-color: var(--gray-50);
         }
         
         .parcela-item:last-child {
@@ -319,10 +354,11 @@
             display: flex;
             gap: 16px;
             flex-wrap: wrap;
-            padding: 12px;
+            padding: 16px;
             background-color: var(--gray-50);
             border-radius: 8px;
             margin-top: 16px;
+            justify-content: center;
         }
         
         .legend-item {
@@ -330,6 +366,9 @@
             align-items: center;
             gap: 8px;
             font-size: 14px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
         }
         
         .legend-color {
@@ -347,11 +386,20 @@
         .risk-detail {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .risk-detail:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
         }
         
         .risk-value {
             font-weight: 600;
+            color: var(--gray-800);
         }
         
         .score-container {
@@ -370,6 +418,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         
         .score-inner {
@@ -382,11 +431,13 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
         }
         
         .score-number {
             font-size: 24px;
             font-weight: 700;
+            color: var(--gray-900);
         }
         
         .score-label {
@@ -414,12 +465,12 @@
         
         .tooltip .tooltip-text {
             visibility: hidden;
-            width: 200px;
+            width: 220px;
             background-color: var(--gray-800);
             color: #fff;
             text-align: center;
             border-radius: 6px;
-            padding: 8px;
+            padding: 10px;
             position: absolute;
             z-index: 1;
             bottom: 125%;
@@ -429,11 +480,39 @@
             transition: opacity 0.3s;
             font-size: 14px;
             font-weight: normal;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
         
         .tooltip:hover .tooltip-text {
             visibility: visible;
             opacity: 1;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background-color: #10b981;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--gray-200);
+            color: var(--gray-700);
+            font-size: 14px;
         }
     </style>
 </head>
@@ -455,37 +534,37 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div class="input-group">
                             <label for="precoImovel">Preço do Imóvel (R$)</label>
-                            <input type="number" id="precoImovel" value="350000">
+                            <input type="number" id="precoImovel" value="350000" min="50000" step="1000">
                         </div>
                         
                         <div class="input-group">
                             <label for="rendaFamiliar">Renda Familiar (R$)</label>
-                            <input type="number" id="rendaFamiliar" value="8000">
+                            <input type="number" id="rendaFamiliar" value="8000" min="1000" step="100">
                         </div>
                         
                         <div class="input-group">
                             <label for="percentualEntrada">Percentual da Entrada (%)</label>
-                            <input type="number" id="percentualEntrada" value="20">
+                            <input type="number" id="percentualEntrada" value="20" min="5" max="100" step="1">
                         </div>
                         
                         <div class="input-group">
                             <label for="tempoEntradaMeses">Prazo da Entrada (meses)</label>
-                            <input type="number" id="tempoEntradaMeses" value="24">
+                            <input type="number" id="tempoEntradaMeses" value="24" min="6" max="60" step="6">
                         </div>
                         
                         <div class="input-group">
                             <label for="tempoObraMeses">Tempo de Obra (meses)</label>
-                            <input type="number" id="tempoObraMeses" value="36">
+                            <input type="number" id="tempoObraMeses" value="36" min="6" max="60" step="6">
                         </div>
                         
                         <div class="input-group">
                             <label for="jurosFaseObra">Juros Fase de Obra (% a.a.)</label>
-                            <input type="number" step="0.1" id="jurosFaseObra" value="0.5">
+                            <input type="number" step="0.1" id="jurosFaseObra" value="0.5" min="0.1" max="5" step="0.1">
                         </div>
                         
                         <div class="input-group">
                             <label for="jurosFinanciamento">Juros Financiamento (% a.a.)</label>
-                            <input type="number" step="0.01" id="jurosFinanciamento" value="8.16">
+                            <input type="number" step="0.01" id="jurosFinanciamento" value="8.16" min="4" max="15" step="0.1">
                         </div>
                         
                         <div class="input-group">
@@ -541,8 +620,8 @@
                             <div class="score-container">
                                 <div class="score-circle">
                                     <div class="score-inner">
-                                        <div class="score-number">720</div>
-                                        <div class="score-label">Bom</div>
+                                        <div class="score-number" id="scoreValue">720</div>
+                                        <div class="score-label" id="scoreLabel">Bom</div>
                                     </div>
                                 </div>
                             </div>
@@ -553,9 +632,9 @@
                                 <i class="fas fa-exclamation-triangle"></i>
                                 <span>Risco de Inadimplência</span>
                             </div>
-                            <div class="card-value">12,5%</div>
+                            <div class="card-value" id="riscoInadimplencia">12,5%</div>
                             <div class="risk-meter">
-                                <div class="risk-meter-fill bg-orange" style="width: 35%"></div>
+                                <div class="risk-meter-fill bg-orange" id="riscoInadimplenciaBar"></div>
                             </div>
                             <div class="risk-labels">
                                 <span>Baixo</span>
@@ -570,9 +649,9 @@
                                 <i class="fas fa-file-contract"></i>
                                 <span>Risco de Distrato</span>
                             </div>
-                            <div class="card-value">8,2%</div>
+                            <div class="card-value" id="riscoDistrato">8,2%</div>
                             <div class="risk-meter">
-                                <div class="risk-meter-fill bg-yellow" style="width: 25%"></div>
+                                <div class="risk-meter-fill bg-yellow" id="riscoDistratoBar"></div>
                             </div>
                             <div class="risk-labels">
                                 <span>Baixo</span>
@@ -590,19 +669,19 @@
                                 <i class="fas fa-hard-hat"></i>
                                 <span>Durante a Obra</span>
                             </div>
-                            <div class="card-value bg-blue" style="padding: 16px; border-radius: 8px; color: white; text-align: center;">25,4%</div>
+                            <div class="card-value" id="comprometimentoObra">25,4%</div>
                             <div class="risk-details">
                                 <div class="risk-detail">
                                     <span>Entrada:</span>
-                                    <span class="risk-value">R$ 1.216,67</span>
+                                    <span class="risk-value" id="valorEntradaObra">R$ 1.216,67</span>
                                 </div>
                                 <div class="risk-detail">
                                     <span>Juros Obra:</span>
-                                    <span class="risk-value">R$ 804,69</span>
+                                    <span class="risk-value" id="jurosObra">R$ 804,69</span>
                                 </div>
                                 <div class="risk-detail">
                                     <span>Total mensal:</span>
-                                    <span class="risk-value">R$ 2.021,36</span>
+                                    <span class="risk-value" id="totalObra">R$ 2.021,36</span>
                                 </div>
                             </div>
                         </div>
@@ -612,19 +691,19 @@
                                 <i class="fas fa-key"></i>
                                 <span>Após Entrega</span>
                             </div>
-                            <div class="card-value bg-green" style="padding: 16px; border-radius: 8px; color: white; text-align: center;">31,8%</div>
+                            <div class="card-value" id="comprometimentoPos">31,8%</div>
                             <div class="risk-details">
                                 <div class="risk-detail">
                                     <span>Financiamento:</span>
-                                    <span class="risk-value">R$ 2.546,80</span>
+                                    <span class="risk-value" id="valorFinanciamentoMensal">R$ 2.546,80</span>
                                 </div>
                                 <div class="risk-detail">
                                     <span>Entrada:</span>
-                                    <span class="risk-value">R$ 0,00</span>
+                                    <span class="risk-value" id="valorEntradaPos">R$ 0,00</span>
                                 </div>
                                 <div class="risk-detail">
                                     <span>Total mensal:</span>
-                                    <span class="risk-value">R$ 2.546,80</span>
+                                    <span class="risk-value" id="totalPos">R$ 2.546,80</span>
                                 </div>
                             </div>
                         </div>
@@ -638,30 +717,7 @@
                                 <span>Parcelas de Entrada (Primeiros 6 meses)</span>
                             </div>
                             <div class="parcelas-container" id="parcelasEntrada">
-                                <div class="parcela-item">
-                                    <span>Mês 1</span>
-                                    <span>R$ 1.166,67</span>
-                                </div>
-                                <div class="parcela-item">
-                                    <span>Mês 2</span>
-                                    <span>R$ 1.172,50</span>
-                                </div>
-                                <div class="parcela-item">
-                                    <span>Mês 3</span>
-                                    <span>R$ 1.178,36</span>
-                                </div>
-                                <div class="parcela-item">
-                                    <span>Mês 4</span>
-                                    <span>R$ 1.184,25</span>
-                                </div>
-                                <div class="parcela-item">
-                                    <span>Mês 5</span>
-                                    <span>R$ 1.190,17</span>
-                                </div>
-                                <div class="parcela-item">
-                                    <span>Mês 6</span>
-                                    <span>R$ 1.196,12</span>
-                                </div>
+                                <!-- Preenchido dinamicamente -->
                             </div>
                         </div>
                         
@@ -671,54 +727,7 @@
                                 <span>Financiamento (Primeiros 12 meses)</span>
                             </div>
                             <div class="parcelas-container" id="parcelasFinanciamento">
-                                <div class="parcela-item">
-                                    <span>Mês 1</span>
-                                    <span>R$ 2.546,80</span>
-                                </div>
-                                <div class="parcela-item">
-                                    <span>Mês 2</span>
-                                    <span>R$ 2.542,75</span>
-                                </div>
-                                <div class="parcela-item">
-                                    <span>Mês 3</span>
-                                    <span>R$ 2.538,70</span>
-                                </div>
-                                <div class="parcela-item">
-                                    <span>Mês 4</span>
-                                    <span>R$ 2.534,65</span>
-                                </div>
-                                <div class="parcela-item">
-                                    <span>Mês 5</span>
-                                    <span>R$ 2.530,59</span>
-                                </div>
-                                <div class="parcela-item">
-                                    <span>Mês 6</span>
-                                    <span>R$ 2.526,53</span>
-                                </div>
-                                <div class="parcela-item">
-                                    <span>Mês 7</span>
-                                    <span>R$ 2.522,47</span>
-                                </div>
-                                <div class="parcela-item">
-                                    <span>Mês 8</span>
-                                    <span>R$ 2.518,41</span>
-                                </div>
-                                <div class="parcela-item">
-                                    <span>Mês 9</span>
-                                    <span>R$ 2.514,34</span>
-                                </div>
-                                <div class="parcela-item">
-                                    <span>Mês 10</span>
-                                    <span>R$ 2.510,27</span>
-                                </div>
-                                <div class="parcela-item">
-                                    <span>Mês 11</span>
-                                    <span>R$ 2.506,19</span>
-                                </div>
-                                <div class="parcela-item">
-                                    <span>Mês 12</span>
-                                    <span>R$ 2.502,11</span>
-                                </div>
+                                <!-- Preenchido dinamicamente -->
                             </div>
                         </div>
                     </div>
@@ -744,6 +753,13 @@
                 </div>
             </div>
         </div>
+        <div class="footer">
+            Simulador MCMV - Desenvolvido com ❤️ para auxiliar na análise de crédito
+        </div>
+    </div>
+
+    <div class="notification" id="notification">
+        Simulação atualizada com sucesso!
     </div>
 
     <script>
@@ -841,7 +857,7 @@
                 risco += 2.5;
             }
             
-            return Math.max(1, Math.min(50, risco)).toFixed(1);
+            return Math.max(1, Math.min(50, risco));
         }
 
         function calcularRiscoDistrato(comprometimentoObra, score) {
@@ -863,7 +879,7 @@
                 risco += 2;
             }
             
-            return Math.max(1, Math.min(30, risco)).toFixed(1);
+            return Math.max(1, Math.min(30, risco));
         }
 
         function formatarMoeda(valor) {
@@ -877,6 +893,14 @@
 
         function formatarPorcentagem(valor) {
             return valor.toFixed(1).replace('.', ',') + '%';
+        }
+
+        function showNotification() {
+            const notification = document.getElementById('notification');
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
         }
 
         function atualizarSimulacao() {
@@ -896,9 +920,9 @@
             
             // Valores base
             const valorEntradaMoradia = entradaMoradia ? 20000 : 0;
-            const valorEntradaTotal = (precoImovel * percentualEntrada / 100) - valorEntradaMoradia;
+            const valorEntradaTotal = Math.max(0, (precoImovel * percentualEntrada / 100) - valorEntradaMoradia);
             const valorSubsidio = Math.min(faixaMCMV.subsidio, precoImovel * 0.2);
-            const valorFinanciamento = precoImovel - (precoImovel * percentualEntrada / 100) - valorSubsidio;
+            const valorFinanciamento = Math.max(0, Math.min(faixaMCMV.maxFinanciamento, precoImovel - (precoImovel * percentualEntrada / 100) - valorSubsidio));
             
             // Parcelas da entrada durante a obra
             const parcelaEntradaInicial = valorEntradaTotal / tempoEntradaMeses;
@@ -949,29 +973,41 @@
             const riscoInadimplencia = calcularRiscoInadimplencia(comprometimentoPosEntrega, score);
             const riscoDistrato = calcularRiscoDistrato(comprometimentoObra, score);
             
+            // Determinar classificação do score
+            let scoreLabel = '';
+            if (score >= 800) scoreLabel = 'Excelente';
+            else if (score >= 700) scoreLabel = 'Bom';
+            else if (score >= 600) scoreLabel = 'Regular';
+            else scoreLabel = 'Baixo';
+            
             // Atualizar a interface com os resultados
             document.getElementById('faixaMCMV').textContent = faixaMCMV.faixa;
             document.getElementById('valorSubsidio').textContent = formatarMoeda(valorSubsidio);
             document.getElementById('valorFinanciamento').textContent = formatarMoeda(valorFinanciamento);
-            document.getElementById('valorEntradaTotal').textContent = formatarMoeda(valorEntradaTotal);
+            document.getElementById('valorEntradaTotal').textContent = formatarMoeda(valorEntradaTotal + valorEntradaMoradia);
             
             // Atualizar score
-            document.querySelector('.score-number').textContent = score;
+            document.getElementById('scoreValue').textContent = score;
+            document.getElementById('scoreLabel').textContent = scoreLabel;
             
             // Atualizar riscos
-            document.querySelector('.summary-card.orange .card-value').textContent = formatarPorcentagem(riscoInadimplencia);
-            document.querySelector('.summary-card.red .card-value').textContent = formatarPorcentagem(riscoDistrato);
+            document.getElementById('riscoInadimplencia').textContent = formatarPorcentagem(riscoInadimplencia);
+            document.getElementById('riscoDistrato').textContent = formatarPorcentagem(riscoDistrato);
+            
+            // Atualizar barras de risco
+            document.getElementById('riscoInadimplenciaBar').style.width = (riscoInadimplencia / 50) * 100 + '%';
+            document.getElementById('riscoDistratoBar').style.width = (riscoDistrato / 30) * 100 + '%';
             
             // Calcular valores potenciais de risco
             const valorInadimplencia = valorFinanciamento * (riscoInadimplencia / 100);
-            const valorDistrato = valorEntradaTotal * (riscoDistrato / 100);
+            const valorDistrato = (valorEntradaTotal + valorEntradaMoradia) * (riscoDistrato / 100);
             
             document.getElementById('valorInadimplencia').textContent = formatarMoeda(valorInadimplencia);
             document.getElementById('valorDistrato').textContent = formatarMoeda(valorDistrato);
             
             // Atualizar comprometimento de renda
-            document.querySelector('.summary-card:nth-child(1) .card-value').textContent = formatarPorcentagem(comprometimentoObra);
-            document.querySelector('.summary-card:nth-child(2) .card-value').textContent = formatarPorcentagem(comprometimentoPosEntrega);
+            document.getElementById('comprometimentoObra').textContent = formatarPorcentagem(comprometimentoObra);
+            document.getElementById('comprometimentoPos').textContent = formatarPorcentagem(comprometimentoPosEntrega);
             
             // Atualizar cores do comprometimento
             const corComprometimentoObra = comprometimentoObra <= 20 ? 'bg-green' : 
@@ -982,17 +1018,17 @@
                                                 comprometimentoPosEntrega <= 30 ? 'bg-yellow' : 
                                                 comprometimentoPosEntrega <= 40 ? 'bg-orange' : 'bg-red';
             
-            document.querySelector('.summary-card:nth-child(1) .card-value').className = 'card-value ' + corComprometimentoObra;
-            document.querySelector('.summary-card:nth-child(2) .card-value').className = 'card-value ' + corComprometimentoPosEntrega;
+            document.getElementById('comprometimentoObra').className = 'card-value ' + corComprometimentoObra;
+            document.getElementById('comprometimentoPos').className = 'card-value ' + corComprometimentoPosEntrega;
             
             // Atualizar detalhes de comprometimento
-            document.querySelector('.summary-card:nth-child(1) .risk-details .risk-value:nth-child(2)').textContent = formatarMoeda(parcelaMediaEntradaObra);
-            document.querySelector('.summary-card:nth-child(1) .risk-details .risk-value:nth-child(4)').textContent = formatarMoeda(parcelaJurosFaseObra);
-            document.querySelector('.summary-card:nth-child(1) .risk-details .risk-value:nth-child(6)').textContent = formatarMoeda(parcelaMediaEntradaObra + parcelaJurosFaseObra);
+            document.getElementById('valorEntradaObra').textContent = formatarMoeda(parcelaMediaEntradaObra);
+            document.getElementById('jurosObra').textContent = formatarMoeda(parcelaJurosFaseObra);
+            document.getElementById('totalObra').textContent = formatarMoeda(parcelaMediaEntradaObra + parcelaJurosFaseObra);
             
-            document.querySelector('.summary-card:nth-child(2) .risk-details .risk-value:nth-child(2)').textContent = formatarMoeda(parcelaFinanciamentoPrimeira);
-            document.querySelector('.summary-card:nth-child(2) .risk-details .risk-value:nth-child(4)').textContent = formatarMoeda(parcelaEntradaPosObraMedia);
-            document.querySelector('.summary-card:nth-child(2) .risk-details .risk-value:nth-child(6)').textContent = formatarMoeda(parcelaFinanciamentoPrimeira + parcelaEntradaPosObraMedia);
+            document.getElementById('valorFinanciamentoMensal').textContent = formatarMoeda(parcelaFinanciamentoPrimeira);
+            document.getElementById('valorEntradaPos').textContent = formatarMoeda(parcelaEntradaPosObraMedia);
+            document.getElementById('totalPos').textContent = formatarMoeda(parcelaFinanciamentoPrimeira + parcelaEntradaPosObraMedia);
             
             // Atualizar parcelas
             const parcelasEntradaElement = document.getElementById('parcelasEntrada');
@@ -1022,6 +1058,9 @@
                 `;
                 parcelasFinanciamentoElement.appendChild(parcelaItem);
             }
+            
+            // Mostrar notificação
+            showNotification();
         }
 
         // Inicializar a simulação
@@ -1030,6 +1069,13 @@
             
             // Adicionar evento ao botão de calcular
             document.getElementById('calcularBtn').addEventListener('click', atualizarSimulacao);
+            
+            // Adicionar eventos aos inputs para recalcular automaticamente
+            const inputs = document.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                input.addEventListener('input', atualizarSimulacao);
+                input.addEventListener('change', atualizarSimulacion);
+            });
         });
     </script>
 </body>
